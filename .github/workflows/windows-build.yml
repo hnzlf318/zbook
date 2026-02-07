@@ -83,13 +83,12 @@ jobs:
 
       - name: Build frontend (Vue)
         shell: pwsh
-        env:
-          NODE_ENV: production
         run: |
           npm ci
           if ($env:RELEASE_BUILD -ne "1") {
             $env:buildUnixTime = [int][double]::Parse((Get-Date -UFormat %s))
           }
+          $env:NODE_ENV = "production"
           npx vite build
 
       - name: Create package directory
