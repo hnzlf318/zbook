@@ -541,8 +541,7 @@ export const useExplorersStore = defineStore('explorers', () => {
                 destinationAmount: transaction.destinationAmount,
                 hideAmount: transaction.hideAmount,
                 tags: tags,
-                comment: transaction.comment,
-                geoLocation: transaction.geoLocation
+                comment: transaction.comment
             };
 
             result.push(item);

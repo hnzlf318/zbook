@@ -21,6 +21,7 @@ import {
 import { Account } from '@/models/account.ts';
 import { TransactionCategory } from '@/models/transaction_category.ts';
 import { TransactionTag } from '@/models/transaction_tag.ts';
+import type { TransactionItem } from '@/models/transaction_item.ts';
 import { type TransactionInsightDataItem } from '@/models/transaction.ts';
 
 export class InsightsExplorerBasicInfo implements InsightsExplorerInfoResponse {
@@ -316,8 +317,8 @@ export class TransactionExplorerQuery {
             case TransactionExplorerConditionField.DestinationAmount:
                 condition = new TransactionExplorerDestinationAmountCondition(TransactionExplorerConditionOperatorType.Between, [0, 0]);
                 break;
-            case TransactionExplorerConditionField.GeoLocation:
-                condition = new TransactionExplorerGeoLocationCondition(TransactionExplorerConditionOperatorType.IsNotEmpty, []);
+            case TransactionExplorerConditionField.TransactionItem:
+                condition = new TransactionExplorerTransactionItemCondition(TransactionExplorerConditionOperatorType.HasAny, []);
                 break;
             case TransactionExplorerConditionField.TransactionTag:
                 condition = new TransactionExplorerTransactionTagCondition(TransactionExplorerConditionOperatorType.HasAny, []);
@@ -375,7 +376,7 @@ export class TransactionExplorerQuery {
         return stack[0] as boolean;
     }
 
-    public toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>): string {
+    public toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>, allItemsMap?: Record<string, TransactionItem>): string {
         if (!this.conditions || this.conditions.length < 1) {
             return '';
         }
@@ -409,7 +410,7 @@ export class TransactionExplorerQuery {
                 });
             } else {
                 stack.push({
-                    textualExpression: token.toExpression(allCategoriesMap, allAccountsMap, allTagsMap)
+                    textualExpression: token.toExpression(allCategoriesMap, allAccountsMap, allTagsMap, allItemsMap)
                 });
             }
         }
@@ -579,8 +580,8 @@ export class TransactionExplorerConditionWithRelation {
             case TransactionExplorerConditionField.DestinationAmount.value:
                 operatorTypes = TransactionExplorerDestinationAmountCondition.supportedOperators;
                 break;
-            case TransactionExplorerConditionField.GeoLocation.value:
-                operatorTypes = TransactionExplorerGeoLocationCondition.supportedOperators;
+            case TransactionExplorerConditionField.TransactionItem.value:
+                operatorTypes = TransactionExplorerTransactionItemCondition.supportedOperators;
                 break;
             case TransactionExplorerConditionField.TransactionTag.value:
                 operatorTypes = TransactionExplorerTransactionTagCondition.supportedOperators;
@@ -668,9 +669,9 @@ export class TransactionExplorerConditionWithRelation {
                     condition = new TransactionExplorerDestinationAmountCondition(conditionOperator as AmountConditionOperator, conditionValue as [number, number]);
                 }
                 break;
-            case TransactionExplorerConditionField.GeoLocation.value:
-                if (TransactionExplorerGeoLocationCondition.supportedOperators[conditionOperator] && Array.isArray(conditionValue)) {
-                    condition = new TransactionExplorerGeoLocationCondition(conditionOperator as GeoLocationConditionOperator, conditionValue as string[]);
+            case TransactionExplorerConditionField.TransactionItem.value:
+                if (TransactionExplorerTransactionItemCondition.supportedOperators[conditionOperator] && Array.isArray(conditionValue)) {
+                    condition = new TransactionExplorerTransactionItemCondition(conditionOperator as TransactionItemConditionOperator, conditionValue as string[]);
                 }
                 break;
             case TransactionExplorerConditionField.TransactionTag.value:
@@ -711,7 +712,7 @@ export interface TransactionExplorerCondition<T = TransactionExplorerConditionFi
 
     getValueForStore(): V;
     match(transaction: TransactionInsightDataItem): boolean;
-    toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>): string;
+    toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>, allItemsMap?: Record<string, TransactionItem>): string;
 }
 
 export class TransactionExplorerTransactionTypeCondition implements TransactionExplorerCondition<TransactionExplorerConditionFieldType.TransactionType, number[]> {
@@ -899,7 +900,7 @@ export abstract class AbstractTransactionExplorerAmountCondition<T = AmountCondi
     }
 
     public abstract match(transaction: TransactionInsightDataItem): boolean;
-    public abstract toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>): string;
+    public abstract toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>, allItemsMap?: Record<string, TransactionItem>): string;
 
     protected matchAmount(amount: number): boolean {
         switch (this.operator) {
@@ -983,20 +984,31 @@ export class TransactionExplorerDestinationAmountCondition extends AbstractTrans
     }
 }
 
-type GeoLocationConditionOperator = TransactionExplorerConditionOperatorType.IsEmpty |
-    TransactionExplorerConditionOperatorType.IsNotEmpty;
+type TransactionItemConditionOperator = TransactionExplorerConditionOperatorType.IsEmpty |
+    TransactionExplorerConditionOperatorType.IsNotEmpty |
+    TransactionExplorerConditionOperatorType.Equals |
+    TransactionExplorerConditionOperatorType.NotEquals |
+    TransactionExplorerConditionOperatorType.HasAny |
+    TransactionExplorerConditionOperatorType.HasAll |
+    TransactionExplorerConditionOperatorType.NotHasAny |
+    TransactionExplorerConditionOperatorType.NotHasAll;
 
-export class TransactionExplorerGeoLocationCondition implements TransactionExplorerCondition<TransactionExplorerConditionFieldType.GeoLocation, string[]> {
+export class TransactionExplorerTransactionItemCondition implements TransactionExplorerCondition<TransactionExplorerConditionFieldType.TransactionItem, string[]> {
     public static readonly supportedOperators: PartialRecord<TransactionExplorerConditionOperatorType, true> = {
         [TransactionExplorerConditionOperatorType.IsEmpty]: true,
-        [TransactionExplorerConditionOperatorType.IsNotEmpty]: true
+        [TransactionExplorerConditionOperatorType.IsNotEmpty]: true,
+        [TransactionExplorerConditionOperatorType.Equals]: true,
+        [TransactionExplorerConditionOperatorType.NotEquals]: true,
+        [TransactionExplorerConditionOperatorType.HasAny]: true,
+        [TransactionExplorerConditionOperatorType.HasAll]: true,
+        [TransactionExplorerConditionOperatorType.NotHasAny]: true,
+        [TransactionExplorerConditionOperatorType.NotHasAll]: true
     };
-
-    public readonly field = TransactionExplorerConditionFieldType.GeoLocation;
-    public readonly operator: GeoLocationConditionOperator = TransactionExplorerConditionOperatorType.IsNotEmpty;
+    public readonly field = TransactionExplorerConditionFieldType.TransactionItem;
+    public readonly operator: TransactionItemConditionOperator = TransactionExplorerConditionOperatorType.HasAny;
     public value: string[];
 
-    constructor(operator: GeoLocationConditionOperator, value: string[]) {
+    constructor(operator: TransactionItemConditionOperator, value: string[]) {
         this.operator = operator;
         this.value = value;
     }
@@ -1006,27 +1018,105 @@ export class TransactionExplorerGeoLocationCondition implements TransactionExplo
             return [];
         }
 
-        return [];
+        return this.value;
     }
 
     public match(transaction: TransactionInsightDataItem): boolean {
-        if (this.operator === TransactionExplorerConditionOperatorType.IsEmpty) {
-            return !transaction.geoLocation;
+        const transactionItemIds = transaction.itemIds ?? [];
+        const transactionItems: Record<string, boolean> = {};
+
+        for (const itemId of transactionItemIds) {
+            transactionItems[itemId] = true;
+        }
+
+        if (this.operator === TransactionExplorerConditionOperatorType.IsEmpty || this.value.length < 1) {
+            return transactionItemIds.length < 1;
         } else if (this.operator === TransactionExplorerConditionOperatorType.IsNotEmpty) {
-            return !!transaction.geoLocation;
+            return transactionItemIds.length > 0;
+        } else if (this.operator === TransactionExplorerConditionOperatorType.Equals || this.operator === TransactionExplorerConditionOperatorType.NotEquals) {
+            let hasAll = true;
+
+            for (const itemId of this.value) {
+                if (!transactionItems[itemId]) {
+                    hasAll = false;
+                    break;
+                }
+            }
+
+            const hasSameCount = transactionItemIds.length === this.value.length;
+
+            if (this.operator === TransactionExplorerConditionOperatorType.Equals && hasAll && hasSameCount) {
+                return true;
+            } else if (this.operator === TransactionExplorerConditionOperatorType.NotEquals && (!hasAll || !hasSameCount)) {
+                return true;
+            }
+        } else if (this.operator === TransactionExplorerConditionOperatorType.HasAny || this.operator === TransactionExplorerConditionOperatorType.NotHasAny) {
+            let hasAny = false;
+
+            for (const itemId of this.value) {
+                if (transactionItems[itemId]) {
+                    hasAny = true;
+                    break;
+                }
+            }
+
+            if (this.operator === TransactionExplorerConditionOperatorType.HasAny && hasAny) {
+                return true;
+            } else if (this.operator === TransactionExplorerConditionOperatorType.NotHasAny && !hasAny) {
+                return true;
+            }
+        } else if (this.operator === TransactionExplorerConditionOperatorType.HasAll || this.operator === TransactionExplorerConditionOperatorType.NotHasAll) {
+            let hasAll = true;
+
+            for (const itemId of this.value) {
+                if (!transactionItems[itemId]) {
+                    hasAll = false;
+                    break;
+                }
+            }
+
+            if (this.operator === TransactionExplorerConditionOperatorType.HasAll && hasAll) {
+                return true;
+            } else if (this.operator === TransactionExplorerConditionOperatorType.NotHasAll && !hasAll) {
+                return true;
+            }
         }
 
         return false;
     }
 
-    public toExpression(): string {
+    public toExpression(_allCategoriesMap: Record<string, TransactionCategory>, _allAccountsMap: Record<string, Account>, _allTagsMap: Record<string, TransactionTag>, allItemsMap?: Record<string, TransactionItem>): string {
         if (this.operator === TransactionExplorerConditionOperatorType.IsEmpty) {
-            return `geo_location IS EMPTY`;
+            return `items IS EMPTY`;
         } else if (this.operator === TransactionExplorerConditionOperatorType.IsNotEmpty) {
-            return `geo_location IS NOT EMPTY`;
+            return `items IS NOT EMPTY`;
         }
 
-        return '';
+        const textualItems = this.value.map(id => {
+            const item = allItemsMap?.[id];
+
+            if (item) {
+                return `'${item.name}'`;
+            } else {
+                return `'${id}'`;
+            }
+        }).join(', ');
+
+        if (this.operator === TransactionExplorerConditionOperatorType.Equals) {
+            return `items FULL MATCHES (${textualItems})`;
+        } else if (this.operator === TransactionExplorerConditionOperatorType.NotEquals) {
+            return `items NOT FULL MATCHES (${textualItems})`;
+        } else if (this.operator === TransactionExplorerConditionOperatorType.HasAny) {
+            return `items HAS ANY (${textualItems})`;
+        } else if (this.operator === TransactionExplorerConditionOperatorType.HasAll) {
+            return `items HAS ALL (${textualItems})`;
+        } else if (this.operator === TransactionExplorerConditionOperatorType.NotHasAny) {
+            return `items NOT HAS ANY (${textualItems})`;
+        } else if (this.operator === TransactionExplorerConditionOperatorType.NotHasAll) {
+            return `items NOT HAS ALL (${textualItems})`;
+        } else {
+            return '';
+        }
     }
 }
 
@@ -1130,7 +1220,7 @@ export class TransactionExplorerTransactionTagCondition implements TransactionEx
         return false;
     }
 
-    public toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>): string {
+    public toExpression(allCategoriesMap: Record<string, TransactionCategory>, allAccountsMap: Record<string, Account>, allTagsMap: Record<string, TransactionTag>, _allItemsMap?: Record<string, TransactionItem>): string {
         if (this.operator === TransactionExplorerConditionOperatorType.IsEmpty) {
             return `tags IS EMPTY`;
         } else if (this.operator === TransactionExplorerConditionOperatorType.IsNotEmpty) {

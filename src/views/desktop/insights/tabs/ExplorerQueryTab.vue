@@ -236,10 +236,23 @@
                                                     />
                                                 </div>
 
-                                                <v-text-field disabled density="compact"
-                                                              :placeholder="tt('None')"
-                                                              v-else-if="conditionWithRelation.condition.field === TransactionExplorerConditionField.GeoLocation.value"
-                                                />
+                                                <div class="d-flex w-100" v-else-if="conditionWithRelation.condition.field === TransactionExplorerConditionField.TransactionItem.value">
+                                                    <v-text-field
+                                                        disabled
+                                                        persistent-placeholder
+                                                        density="compact"
+                                                        :placeholder="tt('None')"
+                                                        v-if="conditionWithRelation.condition.field === TransactionExplorerConditionField.TransactionItem.value &&
+                                                             (conditionWithRelation.condition.operator === TransactionExplorerConditionOperator.IsEmpty.value || conditionWithRelation.condition.operator === TransactionExplorerConditionOperator.IsNotEmpty.value)"
+                                                    />
+
+                                                    <transaction-item-auto-complete
+                                                        density="compact"
+                                                        :disabled="loading || disabled || !!editingQuery"
+                                                        v-model="conditionWithRelation.condition.value"
+                                                        v-else-if="conditionWithRelation.condition.operator !== TransactionExplorerConditionOperator.IsEmpty.value && conditionWithRelation.condition.operator !== TransactionExplorerConditionOperator.IsNotEmpty.value"
+                                                    />
+                                                </div>
 
                                                 <div class="d-flex w-100" v-else-if="conditionWithRelation.condition.field === TransactionExplorerConditionField.TransactionTag.value">
                                                     <v-text-field
@@ -346,6 +359,7 @@ import { useUserStore } from '@/stores/user.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
+import { useTransactionItemsStore } from '@/stores/transactionItem.ts';
 import { useExplorersStore } from '@/stores/explorer.ts';
 
 import { type NameValue, values } from '@/core/base.ts';
@@ -402,6 +416,7 @@ const userStore = useUserStore();
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
 const transactionTagsStore = useTransactionTagsStore();
+const transactionItemsStore = useTransactionItemsStore();
 const explorersStore = useExplorersStore();
 
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
@@ -602,7 +617,7 @@ function getExpression(query: TransactionExplorerQuery, queryIndex: number): str
     }
 
     try {
-        return query.toExpression(transactionCategoriesStore.allTransactionCategoriesMap, accountsStore.allAccountsMap, transactionTagsStore.allTransactionTagsMap);
+        return query.toExpression(transactionCategoriesStore.allTransactionCategoriesMap, accountsStore.allAccountsMap, transactionTagsStore.allTransactionTagsMap, transactionItemsStore.allTransactionItemsMap);
     } catch (ex) {
         logger.error('failed to generate expression for explorer query#' + queryIndex, ex);
         snackbar.value?.showError(tt('Failed to generate expression'));
