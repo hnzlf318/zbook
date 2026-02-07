@@ -5,7 +5,7 @@ import { PARENT_ACCOUNT_CURRENCY_PLACEHOLDER } from '@/consts/currency.ts';
 import { DEFAULT_ACCOUNT_COLOR } from '@/consts/color.ts';
 
 export class Account implements AccountInfoResponse {
-    public id: string;
+    public id: string; 
     public name: string;
     public parentId: string;
     public category: number;
