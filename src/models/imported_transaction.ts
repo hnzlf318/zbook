@@ -69,7 +69,6 @@ export class ImportTransaction implements ImportTransactionResponse {
             tagIds: this.tagIds,
             pictureIds: [],
             comment: this.comment,
-            geoLocation: this.geoLocation,
             clientSessionId: ''
         };
     }

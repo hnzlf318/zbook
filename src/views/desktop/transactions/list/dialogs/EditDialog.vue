@@ -388,7 +388,7 @@
 import ConfirmDialog from '@/components/desktop/ConfirmDialog.vue';
 import SnackBar from '@/components/desktop/SnackBar.vue';
 
-import { ref, computed, useTemplateRef, watch, nextTick, unref } from 'vue';
+import { ref, computed, useTemplateRef, unref } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import {
@@ -476,7 +476,6 @@ const {
     transaction,
     defaultCurrency,
     defaultAccountId,
-    coordinateDisplayType,
     allVisibleAccounts,
     allAccountsMap,
     allVisibleCategorizedAccounts,
@@ -1001,14 +1000,6 @@ function onSavingTag(state: boolean): void {
 function onShowDateTimeError(error: string): void {
     snackbar.value?.showError(error);
 }
-
-watch(activeTab, (newValue) => {
-    if (newValue === 'map') {
-        nextTick(() => {
-            map.value?.initMapView();
-        });
-    }
-});
 
 defineExpose({
     open

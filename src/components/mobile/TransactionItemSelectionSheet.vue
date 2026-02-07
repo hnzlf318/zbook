@@ -61,13 +61,13 @@
 
 <script setup lang="ts">
 import { computed, useTemplateRef } from 'vue';
-import type { Sheet, Searchbar } from 'framework7/types';
+import type { Sheet } from 'framework7/types';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { type CommonTransactionItemSelectionProps, useTransactionItemSelectionBase } from '@/components/base/TransactionItemSelectionBase.ts';
 import { TransactionItem } from '@/models/transaction_item.ts';
 import { scrollToSelectedItem } from '@/lib/ui/common.ts';
-import { type Framework7Dom, scrollSheetToTop } from '@/lib/ui/mobile.ts';
+import { type Framework7Dom } from '@/lib/ui/mobile.ts';
 
 interface TransactionItemSelectionSheetProps extends CommonTransactionItemSelectionProps {
     enableFilter?: boolean;
@@ -91,7 +91,6 @@ const {
 } = useTransactionItemSelectionBase(props, true);
 
 const sheet = useTemplateRef<Sheet.Sheet>('sheet');
-const searchbar = useTemplateRef<Searchbar.Searchbar>('searchbar');
 
 const heightClass = computed<string>(() => {
     const len = filteredItemsWithGroupHeader.value.length;
@@ -132,10 +131,6 @@ function onSheetOpen(event: { $el: Framework7Dom }): void {
 
 function onSheetClosed(): void {
     emit('update:show', false);
-}
-
-function onSearchBarFocus(): void {
-    scrollSheetToTop(sheet.value?.$el as HTMLElement, window.innerHeight);
 }
 </script>
 

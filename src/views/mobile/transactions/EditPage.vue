@@ -523,7 +523,6 @@ const {
     defaultCurrency,
     defaultAccountId,
     firstDayOfWeek,
-    coordinateDisplayType,
     allVisibleAccounts,
     allAccountsMap,
     allVisibleCategorizedAccounts,

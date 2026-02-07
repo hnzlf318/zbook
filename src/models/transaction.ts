@@ -650,6 +650,7 @@ export interface TransactionInfoResponse {
     readonly pictures?: TransactionPictureInfoBasicResponse[];
     readonly comment: string;
     readonly editable: boolean;
+    readonly geoLocation?: TransactionGeoLocationResponse;
 }
 
 export interface TransactionStatisticRequest {

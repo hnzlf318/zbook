@@ -8,8 +8,6 @@ import { DEFAULT_ITEM_GROUP_ID } from '@/consts/item.ts';
 
 import { TransactionItem } from '@/models/transaction_item.ts';
 
-import { values } from '@/core/base.ts';
-
 export type TransactionItemWithGroupHeader = TransactionItem | {
     type: 'subheader';
     title: string;
