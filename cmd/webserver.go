@@ -117,6 +117,7 @@ func startWebServer(c *core.CliContext) error {
 		_ = v.RegisterValidation("validHexRGBColor", validators.ValidHexRGBColor)
 		_ = v.RegisterValidation("validAmountFilter", validators.ValidAmountFilter)
 		_ = v.RegisterValidation("validTagFilter", validators.ValidTagFilter)
+		_ = v.RegisterValidation("validItemFilter", validators.ValidItemFilter)
 		_ = v.RegisterValidation("validFiscalYearStart", validators.ValidateFiscalYearStart)
 	}
 
@@ -435,6 +436,24 @@ func startWebServer(c *core.CliContext) error {
 			apiV1Route.POST("/transaction/tags/hide.json", bindApi(api.TransactionTags.TagHideHandler))
 			apiV1Route.POST("/transaction/tags/move.json", bindApi(api.TransactionTags.TagMoveHandler))
 			apiV1Route.POST("/transaction/tags/delete.json", bindApi(api.TransactionTags.TagDeleteHandler))
+
+			// Transaction Item Groups
+			apiV1Route.GET("/transaction/items/groups/list.json", bindApi(api.TransactionItemGroups.ItemGroupListHandler))
+			apiV1Route.GET("/transaction/items/groups/get.json", bindApi(api.TransactionItemGroups.ItemGroupGetHandler))
+			apiV1Route.POST("/transaction/items/groups/add.json", bindApi(api.TransactionItemGroups.ItemGroupCreateHandler))
+			apiV1Route.POST("/transaction/items/groups/modify.json", bindApi(api.TransactionItemGroups.ItemGroupModifyHandler))
+			apiV1Route.POST("/transaction/items/groups/move.json", bindApi(api.TransactionItemGroups.ItemGroupMoveHandler))
+			apiV1Route.POST("/transaction/items/groups/delete.json", bindApi(api.TransactionItemGroups.ItemGroupDeleteHandler))
+
+			// Transaction Items
+			apiV1Route.GET("/transaction/items/list.json", bindApi(api.TransactionItems.ItemListHandler))
+			apiV1Route.GET("/transaction/items/get.json", bindApi(api.TransactionItems.ItemGetHandler))
+			apiV1Route.POST("/transaction/items/add.json", bindApi(api.TransactionItems.ItemCreateHandler))
+			apiV1Route.POST("/transaction/items/add_batch.json", bindApi(api.TransactionItems.ItemCreateBatchHandler))
+			apiV1Route.POST("/transaction/items/modify.json", bindApi(api.TransactionItems.ItemModifyHandler))
+			apiV1Route.POST("/transaction/items/hide.json", bindApi(api.TransactionItems.ItemHideHandler))
+			apiV1Route.POST("/transaction/items/move.json", bindApi(api.TransactionItems.ItemMoveHandler))
+			apiV1Route.POST("/transaction/items/delete.json", bindApi(api.TransactionItems.ItemDeleteHandler))
 
 			// Transaction Templates
 			apiV1Route.GET("/transaction/templates/list.json", bindApi(api.TransactionTemplates.TemplateListHandler))

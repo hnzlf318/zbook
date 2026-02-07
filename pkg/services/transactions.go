@@ -1675,6 +1675,11 @@ func (s *TransactionService) DeleteAllTransactions(c core.Context, uid int64, de
 		DeletedUnixTime: now,
 	}
 
+	itemIndexUpdateModel := &models.TransactionItemIndex{
+		Deleted:         true,
+		DeletedUnixTime: now,
+	}
+
 	pictureUpdateModel := &models.TransactionPictureInfo{
 		Deleted:         true,
 		DeletedUnixTime: now,
@@ -1696,6 +1701,13 @@ func (s *TransactionService) DeleteAllTransactions(c core.Context, uid int64, de
 
 		// Update all transaction tag index to deleted
 		_, err = sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).Update(tagIndexUpdateModel)
+
+		if err != nil {
+			return err
+		}
+
+		// Update all transaction item index to deleted
+		_, err = sess.Cols("deleted", "deleted_unix_time").Where("uid=? AND deleted=?", uid, false).Update(itemIndexUpdateModel)
 
 		if err != nil {
 			return err

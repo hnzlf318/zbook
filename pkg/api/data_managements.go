@@ -29,6 +29,8 @@ type DataManagementsApi struct {
 	categories              *services.TransactionCategoryService
 	tags                    *services.TransactionTagService
 	tagGroups               *services.TransactionTagGroupService
+	items                   *services.TransactionItemService
+	itemGroups              *services.TransactionItemGroupService
 	pictures                *services.TransactionPictureService
 	templates               *services.TransactionTemplateService
 	userCustomExchangeRates *services.UserCustomExchangeRatesService
@@ -48,6 +50,8 @@ var (
 		categories:              services.TransactionCategories,
 		tags:                    services.TransactionTags,
 		tagGroups:               services.TransactionTagGroups,
+		items:                   services.TransactionItems,
+		itemGroups:              services.TransactionItemGroups,
 		pictures:                services.TransactionPictures,
 		templates:               services.TransactionTemplates,
 		userCustomExchangeRates: services.UserCustomExchangeRates,
@@ -86,6 +90,13 @@ func (a *DataManagementsApi) DataStatisticsHandler(c *core.WebContext) (any, *er
 
 	if err != nil {
 		log.Errorf(c, "[data_managements.DataStatisticsHandler] failed to get total transaction tag count for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.ErrOperationFailed
+	}
+
+	totalTransactionItemCount, err := a.items.GetTotalItemCountByUid(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.DataStatisticsHandler] failed to get total transaction item count for user \"uid:%d\", because %s", uid, err.Error())
 		return nil, errs.ErrOperationFailed
 	}
 
@@ -128,6 +139,7 @@ func (a *DataManagementsApi) DataStatisticsHandler(c *core.WebContext) (any, *er
 		TotalAccountCount:              totalAccountCount,
 		TotalTransactionCategoryCount:  totalTransactionCategoryCount,
 		TotalTransactionTagCount:       totalTransactionTagCount,
+		TotalTransactionItemCount:      totalTransactionItemCount,
 		TotalTransactionCount:          totalTransactionCount,
 		TotalTransactionPictureCount:   totalTransactionPictureCount,
 		TotalInsightsExplorerCount:     totalInsightsExplorerCount,
@@ -199,6 +211,27 @@ func (a *DataManagementsApi) ClearAllDataHandler(c *core.WebContext) (any, *errs
 
 	if err != nil {
 		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all transaction tag groups, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.items.DeleteAllItemIndexes(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all transaction item indexes, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.items.DeleteAllItems(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all transaction items, because %s", err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	err = a.itemGroups.DeleteAllItemGroups(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[data_managements.ClearAllDataHandler] failed to delete all transaction item groups, because %s", err.Error())
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 

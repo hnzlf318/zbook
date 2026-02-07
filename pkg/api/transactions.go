@@ -33,6 +33,7 @@ type TransactionsApi struct {
 	transactions          *services.TransactionService
 	transactionCategories *services.TransactionCategoryService
 	transactionTags       *services.TransactionTagService
+	transactionItems      *services.TransactionItemService
 	transactionPictures   *services.TransactionPictureService
 	accounts              *services.AccountService
 	users                 *services.UserService
@@ -53,6 +54,7 @@ var (
 		transactions:          services.Transactions,
 		transactionCategories: services.TransactionCategories,
 		transactionTags:       services.TransactionTags,
+		transactionItems:      services.TransactionItems,
 		transactionPictures:   services.TransactionPictures,
 		accounts:              services.Accounts,
 		users:                 services.Users,
@@ -192,7 +194,7 @@ func (a *TransactionsApi) TransactionListHandler(c *core.WebContext) (any, *errs
 		transactions = transactions[:transactionListReq.Count]
 	}
 
-	transactionResult, err := a.getTransactionResponseListResult(c, user, transactions, clientTimezone, transactionListReq.WithPictures, transactionListReq.TrimAccount, transactionListReq.TrimCategory, transactionListReq.TrimTag)
+	transactionResult, err := a.getTransactionResponseListResult(c, user, transactions, clientTimezone, transactionListReq.WithPictures, transactionListReq.TrimAccount, transactionListReq.TrimCategory, transactionListReq.TrimTag, transactionListReq.TrimItem)
 
 	if err != nil {
 		log.Errorf(c, "[transactions.TransactionListHandler] failed to assemble transaction result for user \"uid:%d\", because %s", uid, err.Error())
@@ -275,7 +277,7 @@ func (a *TransactionsApi) TransactionMonthListHandler(c *core.WebContext) (any, 
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
-	transactionResult, err := a.getTransactionResponseListResult(c, user, transactions, clientTimezone, transactionListReq.WithPictures, transactionListReq.TrimAccount, transactionListReq.TrimCategory, transactionListReq.TrimTag)
+	transactionResult, err := a.getTransactionResponseListResult(c, user, transactions, clientTimezone, transactionListReq.WithPictures, transactionListReq.TrimAccount, transactionListReq.TrimCategory, transactionListReq.TrimTag, transactionListReq.TrimItem)
 
 	if err != nil {
 		log.Errorf(c, "[transactions.TransactionMonthListHandler] failed to assemble transaction result for user \"uid:%d\", because %s", uid, err.Error())
@@ -362,7 +364,7 @@ func (a *TransactionsApi) TransactionListAllHandler(c *core.WebContext) (any, *e
 		return nil, errs.Or(err, errs.ErrOperationFailed)
 	}
 
-	transactionResult, err := a.getTransactionResponseListResult(c, user, allTransactions, clientTimezone, transactionAllListReq.WithPictures, transactionAllListReq.TrimAccount, transactionAllListReq.TrimCategory, transactionAllListReq.TrimTag)
+	transactionResult, err := a.getTransactionResponseListResult(c, user, allTransactions, clientTimezone, transactionAllListReq.WithPictures, transactionAllListReq.TrimAccount, transactionAllListReq.TrimCategory, transactionAllListReq.TrimTag, transactionAllListReq.TrimItem)
 
 	if err != nil {
 		log.Errorf(c, "[transactions.TransactionListAllHandler] failed to assemble transaction result for user \"uid:%d\", because %s", uid, err.Error())
@@ -441,7 +443,7 @@ func (a *TransactionsApi) TransactionReconciliationStatementHandler(c *core.WebC
 		transactionAccountBalanceMap[transactionWithBalance.RelatedId] = transactionWithBalance
 	}
 
-	transactionResult, err := a.getTransactionResponseListResult(c, user, transactions, clientTimezone, false, true, true, true)
+	transactionResult, err := a.getTransactionResponseListResult(c, user, transactions, clientTimezone, false, true, true, true, true)
 
 	if err != nil {
 		log.Errorf(c, "[transactions.TransactionReconciliationStatementHandler] failed to assemble transaction result for user \"uid:%d\", because %s", uid, err.Error())
@@ -921,7 +923,9 @@ func (a *TransactionsApi) TransactionGetHandler(c *core.WebContext) (any, *errs.
 
 	transactionEditable := transaction.IsEditable(user, clientTimezone, accountMap[transaction.AccountId], accountMap[transaction.RelatedAccountId])
 	transactionTagIds := allTransactionTagIds[transaction.TransactionId]
-	transactionResp := transaction.ToTransactionInfoResponse(transactionTagIds, transactionEditable)
+	transactionItemIds, _ := a.transactionItems.GetAllItemIdsOfTransactions(c, uid, []int64{transaction.TransactionId})
+	transactionItemIdsSlice := transactionItemIds[transaction.TransactionId]
+	transactionResp := transaction.ToTransactionInfoResponse(transactionTagIds, transactionItemIdsSlice, transactionEditable)
 
 	if !transactionGetReq.TrimAccount {
 		if sourceAccount := accountMap[transaction.AccountId]; sourceAccount != nil {
@@ -941,6 +945,11 @@ func (a *TransactionsApi) TransactionGetHandler(c *core.WebContext) (any, *errs.
 
 	if !transactionGetReq.TrimTag {
 		transactionResp.Tags = a.getTransactionTagInfoResponses(transactionTagIds, tagMap)
+	}
+
+	if !transactionGetReq.TrimItem {
+		itemMap, _ := a.transactionItems.GetItemsByItemIds(c, uid, transactionItemIdsSlice)
+		transactionResp.Items = a.getTransactionItemInfoResponses(transactionItemIdsSlice, itemMap)
 	}
 
 	if transactionGetReq.WithPictures && a.CurrentConfig().EnableTransactionPictures {
@@ -1063,7 +1072,7 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 					return nil, errs.Or(err, errs.ErrOperationFailed)
 				}
 
-				transactionResp := transaction.ToTransactionInfoResponse(tagIds, transactionEditable)
+				transactionResp := transaction.ToTransactionInfoResponse(tagIds, nil, transactionEditable)
 				transactionResp.Pictures = a.GetTransactionPictureInfoResponseList(pictureInfos)
 
 				return transactionResp, nil
@@ -1081,7 +1090,7 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 	log.Infof(c, "[transactions.TransactionCreateHandler] user \"uid:%d\" has created a new transaction \"id:%d\" successfully", uid, transaction.TransactionId)
 
 	a.SetSubmissionRemarkIfEnable(duplicatechecker.DUPLICATE_CHECKER_TYPE_NEW_TRANSACTION, uid, transactionCreateReq.ClientSessionId, utils.Int64ToString(transaction.TransactionId))
-	transactionResp := transaction.ToTransactionInfoResponse(tagIds, transactionEditable)
+	transactionResp := transaction.ToTransactionInfoResponse(tagIds, nil, transactionEditable)
 	transactionResp.Pictures = a.GetTransactionPictureInfoResponseList(pictureInfos)
 
 	return transactionResp, nil
@@ -1281,7 +1290,7 @@ func (a *TransactionsApi) TransactionModifyHandler(c *core.WebContext) (any, *er
 	log.Infof(c, "[transactions.TransactionModifyHandler] user \"uid:%d\" has updated transaction \"id:%d\" successfully", uid, transactionModifyReq.Id)
 
 	newTransaction.Type = transaction.Type
-	newTransactionResp := newTransaction.ToTransactionInfoResponse(tagIds, transactionEditable)
+	newTransactionResp := newTransaction.ToTransactionInfoResponse(tagIds, nil, transactionEditable)
 	newTransactionResp.Pictures = a.GetTransactionPictureInfoResponseList(newPictureInfos)
 
 	return newTransactionResp, nil
@@ -1928,7 +1937,23 @@ func (a *TransactionsApi) getTransactionTagInfoResponses(tagIds []int64, allTran
 	return allTags
 }
 
-func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, user *models.User, transactions []*models.Transaction, clientTimezone *time.Location, withPictures bool, trimAccount bool, trimCategory bool, trimTag bool) (models.TransactionInfoResponseSlice, error) {
+func (a *TransactionsApi) getTransactionItemInfoResponses(itemIds []int64, allTransactionItems map[int64]*models.TransactionItem) []*models.TransactionItemInfoResponse {
+	allItems := make([]*models.TransactionItemInfoResponse, 0, len(itemIds))
+
+	for i := 0; i < len(itemIds); i++ {
+		item := allTransactionItems[itemIds[i]]
+
+		if item == nil {
+			continue
+		}
+
+		allItems = append(allItems, item.ToTransactionItemInfoResponse())
+	}
+
+	return allItems
+}
+
+func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, user *models.User, transactions []*models.Transaction, clientTimezone *time.Location, withPictures bool, trimAccount bool, trimCategory bool, trimTag bool, trimItem bool) (models.TransactionInfoResponseSlice, error) {
 	uid := user.Uid
 	transactionIds := make([]int64, len(transactions))
 	accountIds := make([]int64, 0, len(transactions)*2)
@@ -1967,8 +1992,16 @@ func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, u
 		return nil, err
 	}
 
+	allTransactionItemIds, err := a.transactionItems.GetAllItemIdsOfTransactions(c, uid, transactionIds)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.getTransactionResponseListResult] failed to get transactions item ids for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, err
+	}
+
 	var categoryMap map[int64]*models.TransactionCategory
 	var tagMap map[int64]*models.TransactionTag
+	var itemMap map[int64]*models.TransactionItem
 	var pictureInfoMap map[int64][]*models.TransactionPictureInfo
 
 	if !trimCategory {
@@ -1985,6 +2018,19 @@ func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, u
 
 		if err != nil {
 			log.Errorf(c, "[transactions.getTransactionResponseListResult] failed to get transactions tags for user \"uid:%d\", because %s", uid, err.Error())
+			return nil, err
+		}
+	}
+
+	if !trimItem {
+		allItemIds := make([]int64, 0)
+		for _, ids := range allTransactionItemIds {
+			allItemIds = append(allItemIds, ids...)
+		}
+		itemMap, err = a.transactionItems.GetItemsByItemIds(c, uid, utils.ToUniqueInt64Slice(allItemIds))
+
+		if err != nil {
+			log.Errorf(c, "[transactions.getTransactionResponseListResult] failed to get transactions items for user \"uid:%d\", because %s", uid, err.Error())
 			return nil, err
 		}
 	}
@@ -2009,7 +2055,8 @@ func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, u
 
 		transactionEditable := transaction.IsEditable(user, clientTimezone, allAccounts[transaction.AccountId], allAccounts[transaction.RelatedAccountId])
 		transactionTagIds := allTransactionTagIds[transaction.TransactionId]
-		result[i] = transaction.ToTransactionInfoResponse(transactionTagIds, transactionEditable)
+		transactionItemIds := allTransactionItemIds[transaction.TransactionId]
+		result[i] = transaction.ToTransactionInfoResponse(transactionTagIds, transactionItemIds, transactionEditable)
 
 		if !trimAccount {
 			if sourceAccount := allAccounts[transaction.AccountId]; sourceAccount != nil {
@@ -2029,6 +2076,10 @@ func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, u
 
 		if !trimTag {
 			result[i].Tags = a.getTransactionTagInfoResponses(transactionTagIds, tagMap)
+		}
+
+		if !trimItem {
+			result[i].Items = a.getTransactionItemInfoResponses(transactionItemIds, itemMap)
 		}
 
 		if withPictures && a.CurrentConfig().EnableTransactionPictures {

@@ -10,6 +10,7 @@ import (
 )
 
 const MaximumTagsCountOfTransaction = 10
+const MaximumItemsCountOfTransaction = 10
 const MaximumPicturesCountOfTransaction = 10
 
 // TransactionType represents transaction type
@@ -119,6 +120,20 @@ const (
 	TRANSACTION_TAG_FILTER_NOT_HAS_ALL TransactionTagFilterType = 3
 )
 
+// TransactionItemFilterValue represents transaction item filter value for no item
+const TransactionNoItemFilterValue = "none"
+
+// TransactionItemFilterType represents transaction item filter type
+type TransactionItemFilterType byte
+
+// Transaction item filter types
+const (
+	TRANSACTION_ITEM_FILTER_HAS_ANY     TransactionItemFilterType = 0
+	TRANSACTION_ITEM_FILTER_HAS_ALL     TransactionItemFilterType = 1
+	TRANSACTION_ITEM_FILTER_NOT_HAS_ANY TransactionItemFilterType = 2
+	TRANSACTION_ITEM_FILTER_NOT_HAS_ALL TransactionItemFilterType = 3
+)
+
 // Transaction represents transaction data stored in database
 type Transaction struct {
 	TransactionId        int64             `xorm:"PK"`
@@ -169,6 +184,7 @@ type TransactionCreateRequest struct {
 	DestinationAmount    int64                          `json:"destinationAmount" binding:"min=-99999999999,max=99999999999"`
 	HideAmount           bool                           `json:"hideAmount"`
 	TagIds               []string                       `json:"tagIds"`
+	ItemIds              []string                       `json:"itemIds"`
 	PictureIds           []string                       `json:"pictureIds"`
 	Comment              string                         `json:"comment" binding:"max=255"`
 	GeoLocation          *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
@@ -187,6 +203,7 @@ type TransactionModifyRequest struct {
 	DestinationAmount    int64                          `json:"destinationAmount" binding:"min=-99999999999,max=99999999999"`
 	HideAmount           bool                           `json:"hideAmount"`
 	TagIds               []string                       `json:"tagIds"`
+	ItemIds              []string                       `json:"itemIds"`
 	PictureIds           []string                       `json:"pictureIds"`
 	Comment              string                         `json:"comment" binding:"max=255"`
 	GeoLocation          *TransactionGeoLocationRequest `json:"geoLocation" binding:"omitempty"`
@@ -208,12 +225,18 @@ type TransactionTagFilter struct {
 	Type   TransactionTagFilterType
 }
 
+type TransactionItemFilter struct {
+	ItemIds []int64
+	Type    TransactionItemFilterType
+}
+
 // TransactionCountRequest represents transaction count request
 type TransactionCountRequest struct {
 	Type         TransactionType `form:"type" binding:"min=0,max=4"`
 	CategoryIds  string          `form:"category_ids"`
 	AccountIds   string          `form:"account_ids"`
 	TagFilter    string          `form:"tag_filter" binding:"validTagFilter"`
+	ItemFilter   string          `form:"item_filter" binding:"validItemFilter"`
 	AmountFilter string          `form:"amount_filter" binding:"validAmountFilter"`
 	Keyword      string          `form:"keyword"`
 	MaxTime      int64           `form:"max_time" binding:"min=0"` // Transaction time sequence id
@@ -226,6 +249,7 @@ type TransactionListByMaxTimeRequest struct {
 	CategoryIds  string          `form:"category_ids"`
 	AccountIds   string          `form:"account_ids"`
 	TagFilter    string          `form:"tag_filter" binding:"validTagFilter"`
+	ItemFilter   string          `form:"item_filter" binding:"validItemFilter"`
 	AmountFilter string          `form:"amount_filter" binding:"validAmountFilter"`
 	Keyword      string          `form:"keyword"`
 	MaxTime      int64           `form:"max_time" binding:"min=0"` // Transaction time sequence id
@@ -237,6 +261,7 @@ type TransactionListByMaxTimeRequest struct {
 	TrimAccount  bool            `form:"trim_account"`
 	TrimCategory bool            `form:"trim_category"`
 	TrimTag      bool            `form:"trim_tag"`
+	TrimItem     bool            `form:"trim_item"`
 }
 
 // TransactionListInMonthByPageRequest represents all parameters of transaction listing by month request
@@ -247,12 +272,14 @@ type TransactionListInMonthByPageRequest struct {
 	CategoryIds  string          `form:"category_ids"`
 	AccountIds   string          `form:"account_ids"`
 	TagFilter    string          `form:"tag_filter" binding:"validTagFilter"`
+	ItemFilter   string          `form:"item_filter" binding:"validItemFilter"`
 	AmountFilter string          `form:"amount_filter" binding:"validAmountFilter"`
 	Keyword      string          `form:"keyword"`
 	WithPictures bool            `form:"with_pictures"`
 	TrimAccount  bool            `form:"trim_account"`
 	TrimCategory bool            `form:"trim_category"`
 	TrimTag      bool            `form:"trim_tag"`
+	TrimItem     bool            `form:"trim_item"`
 }
 
 // TransactionAllListRequest represents all parameters of all transaction listing request
@@ -261,6 +288,7 @@ type TransactionAllListRequest struct {
 	CategoryIds  string          `form:"category_ids"`
 	AccountIds   string          `form:"account_ids"`
 	TagFilter    string          `form:"tag_filter" binding:"validTagFilter"`
+	ItemFilter   string          `form:"item_filter" binding:"validItemFilter"`
 	AmountFilter string          `form:"amount_filter" binding:"validAmountFilter"`
 	Keyword      string          `form:"keyword"`
 	StartTime    int64           `form:"start_time" binding:"min=0"`
@@ -269,6 +297,7 @@ type TransactionAllListRequest struct {
 	TrimAccount  bool            `form:"trim_account"`
 	TrimCategory bool            `form:"trim_category"`
 	TrimTag      bool            `form:"trim_tag"`
+	TrimItem     bool            `form:"trim_item"`
 }
 
 // TransactionReconciliationStatementRequest represents all parameters of transaction reconciliation statement request
@@ -283,6 +312,7 @@ type TransactionStatisticRequest struct {
 	StartTime              int64  `form:"start_time" binding:"min=0"`
 	EndTime                int64  `form:"end_time" binding:"min=0"`
 	TagFilter              string `form:"tag_filter" binding:"validTagFilter"`
+	ItemFilter             string `form:"item_filter" binding:"validItemFilter"`
 	Keyword                string `form:"keyword"`
 	UseTransactionTimezone bool   `form:"use_transaction_timezone"`
 }
@@ -291,6 +321,7 @@ type TransactionStatisticRequest struct {
 type TransactionStatisticTrendsRequest struct {
 	YearMonthRangeRequest
 	TagFilter              string `form:"tag_filter" binding:"validTagFilter"`
+	ItemFilter             string `form:"item_filter" binding:"validItemFilter"`
 	Keyword                string `form:"keyword"`
 	UseTransactionTimezone bool   `form:"use_transaction_timezone"`
 }
@@ -323,6 +354,7 @@ type TransactionGetRequest struct {
 	TrimAccount  bool  `form:"trim_account"`
 	TrimCategory bool  `form:"trim_category"`
 	TrimTag      bool  `form:"trim_tag"`
+	TrimItem     bool  `form:"trim_item"`
 }
 
 // TransactionMoveBetweenAccountsRequest represents all parameters of moving all transactions between accounts request
@@ -366,6 +398,8 @@ type TransactionInfoResponse struct {
 	HideAmount           bool                                     `json:"hideAmount"`
 	TagIds               []string                                 `json:"tagIds"`
 	Tags                 []*TransactionTagInfoResponse            `json:"tags,omitempty"`
+	ItemIds              []string                                 `json:"itemIds"`
+	Items                []*TransactionItemInfoResponse           `json:"items,omitempty"`
 	Pictures             TransactionPictureInfoBasicResponseSlice `json:"pictures,omitempty"`
 	Comment              string                                   `json:"comment"`
 	GeoLocation          *TransactionGeoLocationResponse          `json:"geoLocation,omitempty"`
@@ -511,6 +545,52 @@ func ParseTransactionTagFilter(tagFilterStr string) ([]*TransactionTagFilter, er
 	return transactionTagFilters, nil
 }
 
+// ParseTransactionItemFilter parses transaction item filter from string
+func ParseTransactionItemFilter(itemFilterStr string) ([]*TransactionItemFilter, error) {
+	if itemFilterStr == "" || itemFilterStr == TransactionNoItemFilterValue {
+		return []*TransactionItemFilter{}, nil
+	}
+
+	filters := strings.Split(itemFilterStr, ";")
+	transactionItemFilters := make([]*TransactionItemFilter, 0, len(filters))
+
+	for _, filter := range filters {
+		itemFilterItem := strings.Split(filter, ":")
+
+		if len(itemFilterItem) != 2 {
+			return nil, errs.ErrFormatInvalid
+		}
+
+		itemFilterType, err := utils.StringToInt(itemFilterItem[0])
+
+		if err != nil || (itemFilterType < int(TRANSACTION_ITEM_FILTER_HAS_ANY) || itemFilterType > int(TRANSACTION_ITEM_FILTER_NOT_HAS_ALL)) {
+			return nil, errs.ErrFormatInvalid
+		}
+
+		textualItemIds := strings.Split(itemFilterItem[1], ",")
+		itemIds := make([]int64, 0, len(textualItemIds))
+
+		for _, itemIdStr := range textualItemIds {
+			itemId, err := utils.StringToInt64(itemIdStr)
+
+			if err != nil {
+				return nil, errs.ErrTransactionItemIdInvalid
+			}
+
+			itemIds = append(itemIds, itemId)
+		}
+
+		transactionItemFilter := &TransactionItemFilter{
+			ItemIds: itemIds,
+			Type:    TransactionItemFilterType(itemFilterType),
+		}
+
+		transactionItemFilters = append(transactionItemFilters, transactionItemFilter)
+	}
+
+	return transactionItemFilters, nil
+}
+
 // IsEditable returns whether this transaction can be edited
 func (t *Transaction) IsEditable(currentUser *User, clientTimezone *time.Location, account *Account, relatedAccount *Account) bool {
 	if currentUser == nil || !currentUser.CanEditTransactionByTransactionTime(t.TransactionTime, clientTimezone) {
@@ -531,7 +611,7 @@ func (t *Transaction) IsEditable(currentUser *User, clientTimezone *time.Locatio
 }
 
 // ToTransactionInfoResponse returns a view-object according to database model
-func (t *Transaction) ToTransactionInfoResponse(tagIds []int64, editable bool) *TransactionInfoResponse {
+func (t *Transaction) ToTransactionInfoResponse(tagIds []int64, itemIds []int64, editable bool) *TransactionInfoResponse {
 	transactionType, err := t.Type.ToTransactionType()
 
 	if err != nil {
@@ -577,6 +657,7 @@ func (t *Transaction) ToTransactionInfoResponse(tagIds []int64, editable bool) *
 		DestinationAmount:    destinationAmount,
 		HideAmount:           t.HideAmount,
 		TagIds:               utils.Int64ArrayToStringArray(tagIds),
+		ItemIds:              utils.Int64ArrayToStringArray(itemIds),
 		Comment:              t.Comment,
 		GeoLocation:          geoLocation,
 		Editable:             editable,

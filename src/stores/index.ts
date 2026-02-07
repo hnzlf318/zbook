@@ -6,6 +6,7 @@ import { useUserStore } from './user.ts';
 import { useAccountsStore } from './account.ts';
 import { useTransactionCategoriesStore } from './transactionCategory.ts';
 import { useTransactionTagsStore } from './transactionTag.ts';
+import { useTransactionItemsStore } from './transactionItem.ts';
 import { useTransactionTemplatesStore } from './transactionTemplate.ts';
 import { useTransactionsStore } from './transaction.ts';
 import { useOverviewStore } from './overview.ts';
@@ -46,6 +47,7 @@ export const useRootStore = defineStore('root', () => {
     const accountsStore = useAccountsStore();
     const transactionCategoriesStore = useTransactionCategoriesStore();
     const transactionTagsStore = useTransactionTagsStore();
+    const transactionItemsStore = useTransactionItemsStore();
     const transactionTemplatesStore = useTransactionTemplatesStore();
     const transactionsStore = useTransactionsStore();
     const overviewStore = useOverviewStore();
@@ -67,6 +69,7 @@ export const useRootStore = defineStore('root', () => {
         overviewStore.resetTransactionOverview();
         transactionsStore.resetTransactions();
         transactionTagsStore.resetTransactionTags();
+        transactionItemsStore.resetTransactionItems();
         transactionCategoriesStore.resetTransactionCategories();
         transactionTemplatesStore.resetTransactionTemplates();
         accountsStore.resetAccounts();
@@ -617,6 +620,10 @@ export const useRootStore = defineStore('root', () => {
 
                 if (!transactionTagsStore.transactionTagListStateInvalid) {
                     transactionTagsStore.updateTransactionTagListInvalidState(true);
+                }
+
+                if (!transactionItemsStore.transactionItemListStateInvalid) {
+                    transactionItemsStore.updateTransactionItemListInvalidState(true);
                 }
 
                 if (!overviewStore.transactionOverviewStateInvalid) {

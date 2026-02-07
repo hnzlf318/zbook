@@ -16,4 +16,7 @@ const (
 	UUID_TYPE_PICTURE     UuidType = 8
 	UUID_TYPE_EXPLORER    UuidType = 9
 	UUID_TYPE_TAG_GROUP   UuidType = 10
+	UUID_TYPE_ITEM_GROUP  UuidType = 11
+	UUID_TYPE_ITEM        UuidType = 12
+	UUID_TYPE_ITEM_INDEX  UuidType = 13
 )

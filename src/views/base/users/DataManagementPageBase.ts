@@ -23,6 +23,7 @@ export function useDataManagementPageBase() {
             totalAccountCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalAccountCount)),
             totalTransactionCategoryCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalTransactionCategoryCount)),
             totalTransactionTagCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalTransactionTagCount)),
+            totalTransactionItemCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalTransactionItemCount ?? '0', 10)),
             totalTransactionPictureCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalTransactionPictureCount)),
             totalInsightsExplorerCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalInsightsExplorerCount)),
             totalTransactionTemplateCount: formatNumberToLocalizedNumerals(parseInt(dataStatistics.value.totalTransactionTemplateCount)),

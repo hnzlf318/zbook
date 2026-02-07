@@ -125,6 +125,30 @@ func updateAllDatabaseTablesStructure(c *core.CliContext) error {
 
 	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] transaction tag index table maintained successfully")
 
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.TransactionItemGroup))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] transaction item group table maintained successfully")
+
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.TransactionItem))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] transaction item table maintained successfully")
+
+	err = datastore.Container.UserDataStore.SyncStructs(new(models.TransactionItemIndex))
+
+	if err != nil {
+		return err
+	}
+
+	log.BootInfof(c, "[database.updateAllDatabaseTablesStructure] transaction item index table maintained successfully")
+
 	err = datastore.Container.UserDataStore.SyncStructs(new(models.TransactionTemplate))
 
 	if err != nil {

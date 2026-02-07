@@ -117,6 +117,22 @@ import type {
     TransactionTagInfoResponse
 } from '@/models/transaction_tag.ts';
 import type {
+    TransactionItemGroupCreateRequest,
+    TransactionItemGroupModifyRequest,
+    TransactionItemGroupMoveRequest,
+    TransactionItemGroupDeleteRequest,
+    TransactionItemGroupInfoResponse
+} from '@/models/transaction_item_group.ts';
+import type {
+    TransactionItemCreateRequest,
+    TransactionItemCreateBatchRequest,
+    TransactionItemModifyRequest,
+    TransactionItemHideRequest,
+    TransactionItemMoveRequest,
+    TransactionItemDeleteRequest,
+    TransactionItemInfoResponse
+} from '@/models/transaction_item.ts';
+import type {
     TransactionTemplateCreateRequest,
     TransactionTemplateModifyRequest,
     TransactionTemplateHideRequest,
@@ -753,6 +769,48 @@ export default {
     },
     deleteTransactionTag: (req: TransactionTagDeleteRequest): ApiResponsePromise<boolean> => {
         return axios.post<ApiResponse<boolean>>('v1/transaction/tags/delete.json', req);
+    },
+    getAllTransactionItemGroups: (): ApiResponsePromise<TransactionItemGroupInfoResponse[]> => {
+        return axios.get<ApiResponse<TransactionItemGroupInfoResponse[]>>('v1/transaction/items/groups/list.json');
+    },
+    getTransactionItemGroup: ({ id }: { id: string }): ApiResponsePromise<TransactionItemGroupInfoResponse> => {
+        return axios.get<ApiResponse<TransactionItemGroupInfoResponse>>('v1/transaction/items/groups/get.json?id=' + id);
+    },
+    addTransactionItemGroup: (req: TransactionItemGroupCreateRequest): ApiResponsePromise<TransactionItemGroupInfoResponse> => {
+        return axios.post<ApiResponse<TransactionItemGroupInfoResponse>>('v1/transaction/items/groups/add.json', req);
+    },
+    modifyTransactionItemGroup: (req: TransactionItemGroupModifyRequest): ApiResponsePromise<TransactionItemGroupInfoResponse> => {
+        return axios.post<ApiResponse<TransactionItemGroupInfoResponse>>('v1/transaction/items/groups/modify.json', req);
+    },
+    moveTransactionItemGroup: (req: TransactionItemGroupMoveRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transaction/items/groups/move.json', req);
+    },
+    deleteTransactionItemGroup: (req: TransactionItemGroupDeleteRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transaction/items/groups/delete.json', req);
+    },
+    getAllTransactionItems: (): ApiResponsePromise<TransactionItemInfoResponse[]> => {
+        return axios.get<ApiResponse<TransactionItemInfoResponse[]>>('v1/transaction/items/list.json');
+    },
+    getTransactionItem: ({ id }: { id: string }): ApiResponsePromise<TransactionItemInfoResponse> => {
+        return axios.get<ApiResponse<TransactionItemInfoResponse>>('v1/transaction/items/get.json?id=' + id);
+    },
+    addTransactionItem: (req: TransactionItemCreateRequest): ApiResponsePromise<TransactionItemInfoResponse> => {
+        return axios.post<ApiResponse<TransactionItemInfoResponse>>('v1/transaction/items/add.json', req);
+    },
+    addTransactionItemBatch: (req: TransactionItemCreateBatchRequest): ApiResponsePromise<TransactionItemInfoResponse[]> => {
+        return axios.post<ApiResponse<TransactionItemInfoResponse[]>>('v1/transaction/items/add_batch.json', req);
+    },
+    modifyTransactionItem: (req: TransactionItemModifyRequest): ApiResponsePromise<TransactionItemInfoResponse> => {
+        return axios.post<ApiResponse<TransactionItemInfoResponse>>('v1/transaction/items/modify.json', req);
+    },
+    hideTransactionItem: (req: TransactionItemHideRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transaction/items/hide.json', req);
+    },
+    moveTransactionItem: (req: TransactionItemMoveRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transaction/items/move.json', req);
+    },
+    deleteTransactionItem: (req: TransactionItemDeleteRequest): ApiResponsePromise<boolean> => {
+        return axios.post<ApiResponse<boolean>>('v1/transaction/items/delete.json', req);
     },
     getAllTransactionTemplates: ({ templateType }: { templateType: number }): ApiResponsePromise<TransactionTemplateInfoResponse[]> => {
         return axios.get<ApiResponse<TransactionTemplateInfoResponse[]>>('v1/transaction/templates/list.json?templateType=' + templateType);

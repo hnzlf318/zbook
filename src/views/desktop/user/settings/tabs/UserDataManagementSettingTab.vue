@@ -56,6 +56,12 @@
                                 color: 'grey'
                             },
                             {
+                                title: 'Transaction Items',
+                                count: displayDataStatistics ? displayDataStatistics.totalTransactionItemCount : '-',
+                                icon: mdiFormatListBulleted,
+                                color: 'brown-darken-1'
+                            },
+                            {
                                 title: 'Transaction Templates',
                                 count: displayDataStatistics ? displayDataStatistics.totalTransactionTemplateCount : '-',
                                 icon: mdiClipboardTextOutline,
@@ -192,6 +198,7 @@ import {
     mdiCompassOutline,
     mdiViewDashboardOutline,
     mdiTagOutline,
+    mdiFormatListBulleted,
     mdiClipboardTextOutline,
     mdiClipboardTextClockOutline,
     mdiAlert

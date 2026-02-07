@@ -99,3 +99,8 @@ func GetParameterInvalidAmountFilterMessage(field string) string {
 func GetParameterInvalidTagFilterMessage(field string) string {
 	return fmt.Sprintf("parameter \"%s\" is invalid tag filter", field)
 }
+
+// GetParameterInvalidItemFilterMessage returns specific error message for invalid item filter parameter error
+func GetParameterInvalidItemFilterMessage(field string) string {
+	return fmt.Sprintf("parameter \"%s\" is invalid item filter", field)
+}

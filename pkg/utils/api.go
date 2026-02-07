@@ -188,6 +188,8 @@ func getValidationErrorText(err validator.FieldError) string {
 		return errs.GetParameterInvalidAmountFilterMessage(fieldName)
 	case "validTagFilter":
 		return errs.GetParameterInvalidTagFilterMessage(fieldName)
+	case "validItemFilter":
+		return errs.GetParameterInvalidItemFilterMessage(fieldName)
 	}
 
 	return errs.GetParameterInvalidMessage(fieldName)

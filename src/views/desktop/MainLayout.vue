@@ -74,6 +74,12 @@
                     </router-link>
                 </li>
                 <li class="nav-link">
+                    <router-link to="/item/list">
+                        <v-icon class="nav-item-icon" :icon="mdiFormatListBulleted"/>
+                        <span class="nav-item-title">{{ tt('Transaction Items') }}</span>
+                    </router-link>
+                </li>
+                <li class="nav-link">
                     <router-link to="/template/list">
                         <v-icon class="nav-item-icon" :icon="mdiClipboardTextOutline"/>
                         <span class="nav-item-title">{{ tt('Transaction Templates') }}</span>
@@ -231,6 +237,7 @@ import {
     mdiCreditCardOutline,
     mdiViewDashboardOutline,
     mdiTagOutline,
+    mdiFormatListBulleted,
     mdiClipboardTextOutline,
     mdiClipboardTextClockOutline,
     mdiChartPieOutline,
