@@ -167,8 +167,8 @@
             </f7-list-item>
         </f7-list>
 
-        <f7-block-title>{{ tt('Exchange Rates Data Page') }}</f7-block-title>
-        <f7-list strong inset dividers>
+        <f7-block-title v-if="false">{{ tt('Exchange Rates Data Page') }}</f7-block-title>
+        <f7-list v-if="false" strong inset dividers>
             <f7-list-item
                 class="item-truncate-after-text"
                 link="#"

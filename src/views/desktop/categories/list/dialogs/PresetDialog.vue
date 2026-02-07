@@ -11,7 +11,7 @@
                     <div class="d-flex align-center mb-1">
                         <h4>{{ getCategoryTypeName(parseInt(categoryType)) }}</h4>
                         <v-spacer/>
-                        <language-select-button :disabled="submitting"
+                        <language-select-button v-if="false" :disabled="submitting"
                                                 :use-model-value="true" v-model="currentLocale" />
                     </div>
 

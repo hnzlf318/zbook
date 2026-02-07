@@ -142,7 +142,7 @@
         </f7-list>
 
         <f7-list form strong inset dividers class="margin-vertical" v-if="!loading">
-            <f7-list-item
+            <f7-list-item v-if="false"
                 class="list-item-with-header-and-title list-item-no-item-after"
                 link="#"
                 :header="languageTitle"
@@ -162,7 +162,7 @@
                 </list-item-selection-popup>
             </f7-list-item>
 
-            <f7-list-item
+            <f7-list-item v-if="false"
                 class="list-item-with-header-and-title list-item-no-item-after"
                 link="#"
                 :header="tt('Default Currency')"

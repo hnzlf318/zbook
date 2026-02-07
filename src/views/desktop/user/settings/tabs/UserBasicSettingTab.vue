@@ -115,7 +115,7 @@
 
                     <v-card-text>
                         <v-row>
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" v-if="false">
                                 <language-select :disabled="loading || saving"
                                                  :label="languageTitle"
                                                  :placeholder="languageTitle"
@@ -123,7 +123,7 @@
                                                  :use-model-value="true" v-model="newProfile.language" />
                             </v-col>
 
-                            <v-col cols="12" md="6">
+                            <v-col cols="12" md="6" v-if="false">
                                 <currency-select :disabled="loading || saving"
                                                  :label="tt('Default Currency')"
                                                  :placeholder="tt('Default Currency')"

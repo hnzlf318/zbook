@@ -96,7 +96,7 @@
                         <span class="title-text">{{ tt('Miscellaneous') }}</span>
                     </div>
                 </li>
-                <li class="nav-link">
+                <li class="nav-link" v-if="false">
                     <router-link to="/exchange_rates">
                         <v-icon class="nav-item-icon" :icon="mdiSwapHorizontal"/>
                         <span class="nav-item-title">{{ tt('Exchange Rates Data') }}</span>

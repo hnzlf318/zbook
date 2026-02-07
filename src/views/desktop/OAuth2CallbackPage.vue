@@ -85,7 +85,7 @@
                         <v-card-text class="pt-0">
                             <v-row>
                                 <v-col cols="12" class="text-center">
-                                    <language-select-button :disabled="loggingInByOAuth2" />
+                                    <language-select-button v-if="false" :disabled="loggingInByOAuth2" />
                                 </v-col>
 
                                 <v-col cols="12" class="d-flex align-center pt-0">

@@ -67,9 +67,9 @@
 
             <f7-list-item :title="tt('Application Lock')" :after="isEnableApplicationLock ? tt('Enabled') : tt('Disabled')" link="/app_lock"></f7-list-item>
 
-            <f7-list-item :title="tt('Exchange Rates Data')" :after="exchangeRatesLastUpdateDate" link="/exchange_rates"></f7-list-item>
+            <f7-list-item v-if="false" :title="tt('Exchange Rates Data')" :after="exchangeRatesLastUpdateDate" link="/exchange_rates"></f7-list-item>
 
-            <f7-list-item>
+            <f7-list-item v-if="false">
                 <template #after-title>
                     {{ tt('Auto-update Exchange Rates Data') }}
                 </template>

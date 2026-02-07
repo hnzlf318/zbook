@@ -89,7 +89,7 @@
                                     </v-col>
                                 </v-row>
 
-                                <v-row>
+                                <v-row v-if="false">
                                     <v-col cols="12" md="12">
                                         <language-select :disabled="submitting || navigateToHomePage"
                                                          :label="languageTitle"
@@ -99,7 +99,7 @@
                                 </v-row>
 
                                 <v-row>
-                                    <v-col cols="12" md="6">
+                                    <v-col cols="12" md="6" v-if="false">
                                         <currency-select :disabled="submitting || navigateToHomePage"
                                                          :label="tt('Default Currency')"
                                                          :placeholder="tt('Default Currency')"
@@ -131,7 +131,7 @@
                                                   v-model="usePresetCategories"/>
                                     </v-col>
                                     <v-col cols="12" sm="6" class="text-end-sm">
-                                        <language-select-button :disabled="submitting || navigateToHomePage"
+                                        <language-select-button v-if="false" :disabled="submitting || navigateToHomePage"
                                                                 :use-model-value="true" v-model="currentLocale" />
                                     </v-col>
                                 </v-row>

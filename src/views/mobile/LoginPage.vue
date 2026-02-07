@@ -68,7 +68,7 @@
 
         <f7-list class="login-page-bottom">
             <f7-block-footer>
-                <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2" />
+                <language-select-button v-if="false" :disabled="loggingInByPassword || loggingInByOAuth2" />
 
                 <div class="login-page-powered-by margin-top-half">
                     <span>Powered by</span>
@@ -79,7 +79,7 @@
         </f7-list>
 
         <f7-toolbar class="login-page-fixed-bottom" tabbar bottom :outline="false">
-            <language-select-button :disabled="loggingInByPassword || loggingInByOAuth2" />
+            <language-select-button v-if="false" :disabled="loggingInByPassword || loggingInByOAuth2" />
 
             <div class="login-page-powered-by margin-top-half">
                 <span>Powered by</span>
