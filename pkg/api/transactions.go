@@ -1009,6 +1009,8 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 		return nil, errs.ErrTransactionHasTooManyItems
 	}
 
+	uid := c.GetCurrentUid()
+
 	if len(itemIds) > 0 {
 		itemMap, err := a.transactionItems.GetItemsByItemIds(c, uid, itemIds)
 
@@ -1048,7 +1050,6 @@ func (a *TransactionsApi) TransactionCreateHandler(c *core.WebContext) (any, *er
 		return nil, errs.ErrTransactionDestinationAmountCannotBeSet
 	}
 
-	uid := c.GetCurrentUid()
 	user, err := a.users.GetUserById(c, uid)
 
 	if err != nil {
