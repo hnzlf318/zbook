@@ -60,8 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue';
-import type { Sheet } from 'framework7/types';
+import { computed } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import { type CommonTransactionItemSelectionProps, useTransactionItemSelectionBase } from '@/components/base/TransactionItemSelectionBase.ts';
@@ -89,8 +88,6 @@ const {
     selectedItemIds,
     filteredItemsWithGroupHeader
 } = useTransactionItemSelectionBase(props, true);
-
-const sheet = useTemplateRef<Sheet.Sheet>('sheet');
 
 const heightClass = computed<string>(() => {
     const len = filteredItemsWithGroupHeader.value.length;
