@@ -61,10 +61,16 @@
                                             </v-btn>
                                             <span>{{ tt('Transaction List') }}</span>
                                             <v-btn class="ms-3" color="default" variant="outlined"
-                                                   :disabled="loading || !canAddTransaction" @click="add()">
+                                                   :disabled="loading || !canAddTransaction"
+                                                   @click="onAddButtonClick">
                                                 {{ tt('Add') }}
-                                                <v-menu activator="parent" max-height="500" :open-on-hover="true" v-if="isTransactionFromAIImageRecognitionEnabled() || isTransactionFromOCRImageRecognitionEnabled() || (allTransactionTemplates && allTransactionTemplates.length)">
+                                                <v-menu activator="parent" max-height="500" :open-on-hover="false"
+                                                        v-if="hasAddTransactionMenu">
                                                     <v-list>
+                                                        <v-list-item key="AddDirect"
+                                                                     :title="tt('Add')"
+                                                                     :prepend-icon="mdiPlusCircle"
+                                                                     @click="add()"></v-list-item>
                                                         <v-list-item key="AIImageRecognition"
                                                                      :title="tt('AI Image Recognition')"
                                                                      :prepend-icon="mdiMagicStaff"
@@ -758,7 +764,8 @@ import {
     mdiFormatListBulleted,
     mdiMagicStaff,
     mdiFileDocumentOutline,
-    mdiTextBoxOutline
+    mdiTextBoxOutline,
+    mdiPlusCircle
 } from '@mdi/js';
 
 interface TransactionListProps {
@@ -863,6 +870,18 @@ const transactionTagsStore = useTransactionTagsStore();
 const transactionsStore = useTransactionsStore();
 const transactionTemplatesStore = useTransactionTemplatesStore();
 const desktopPageStore = useDesktopPageStore();
+
+const hasAddTransactionMenu = computed<boolean>(() =>
+    isTransactionFromAIImageRecognitionEnabled() ||
+    isTransactionFromOCRImageRecognitionEnabled() ||
+    !!(allTransactionTemplates.value && allTransactionTemplates.value.length));
+
+function onAddButtonClick(): void {
+    if (!hasAddTransactionMenu.value) {
+        add();
+    }
+    // When hasAddTransactionMenu is true, the v-menu opens on button click (activator="parent")
+}
 
 const timeFilterMenu = useTemplateRef<VMenu>('timeFilterMenu');
 const categoryFilterMenu = useTemplateRef<VMenu>('categoryFilterMenu');
