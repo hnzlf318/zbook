@@ -25,7 +25,6 @@ import {
     DEFAULT_EXPORT_API_TIMEOUT,
     DEFAULT_IMPORT_API_TIMEOUT,
     DEFAULT_CLEAR_ALL_TRANSACTIONS_API_TIMEOUT,
-    DEFAULT_LLM_API_TIMEOUT,
     GOOGLE_MAP_JAVASCRIPT_URL,
     BAIDU_MAP_JAVASCRIPT_URL,
     AMAP_JAVASCRIPT_URL
@@ -185,7 +184,6 @@ import type {
     UserApplicationCloudSettingsUpdateRequest
 } from '@/models/user_app_cloud_setting.ts';
 import type {
-    RecognizedReceiptImageResponse,
     RecognizedReceiptImageListResponse
 } from '@/models/large_language_model.ts';
 
