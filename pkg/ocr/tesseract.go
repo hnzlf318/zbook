@@ -2,13 +2,11 @@ package ocr
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/mayswind/ezbookkeeping/pkg/log"
 )
@@ -16,9 +14,6 @@ import (
 const (
 	// TesseractLangChineseSimplified and English for bill/screenshot text
 	TesseractLangBill = "chi_sim+eng"
-
-	// max time allowed for a single tesseract run to avoid "fake hang"
-	tesseractTimeout = 30 * time.Second
 )
 
 // RunTesseract runs tesseract OCR on image data and returns recognized text.
@@ -44,20 +39,10 @@ func RunTesseract(imageData []byte, lang string) (string, error) {
 	defer os.Remove(inputPath)
 	defer os.Remove(outputBase + ".txt")
 
-	// Use a context with timeout so tesseract cannot block the server indefinitely.
-	ctx, cancel := context.WithTimeout(context.Background(), tesseractTimeout)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, "tesseract", inputPath, outputBase, "-l", lang)
+	cmd := exec.Command("tesseract", inputPath, outputBase, "-l", lang)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		// If the context timed out, surface that in logs to help diagnose "fake hang" issues.
-		if ctx.Err() == context.DeadlineExceeded {
-			log.Warnf(nil, "[ocr.RunTesseract] tesseract timed out after %s: %v, stderr: %s", tesseractTimeout, err, stderr.String())
-			return "", fmt.Errorf("tesseract timed out after %s: %w", tesseractTimeout, err)
-		}
-
 		log.Warnf(nil, "[ocr.RunTesseract] tesseract failed: %v, stderr: %s", err, stderr.String())
 		return "", fmt.Errorf("tesseract: %w (is tesseract installed? e.g. tesseract-ocr, tesseract-ocr-chi-sim)", err)
 	}
