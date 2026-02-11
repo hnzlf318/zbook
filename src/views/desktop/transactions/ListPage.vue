@@ -75,7 +75,7 @@
                                                                      :title="tt('OCR Bill Recognition')"
                                                                      :prepend-icon="mdiFileDocumentOutline"
                                                                      v-if="isTransactionFromOCRImageRecognitionEnabled()"
-                                                                     @click="addByOCRBillImage"></v-list-item>
+                                                                     @click.stop="addByOCRBillImage"></v-list-item>
                                                         <v-list-item :key="template.id"
                                                                      :title="template.name"
                                                                      :prepend-icon="mdiTextBoxOutline"
@@ -1604,7 +1604,8 @@ function add(template?: TransactionTemplate): void {
 }
 
 function addByOCRBillImage(): void {
-    ocrBillRecognitionDialog.value?.open().then(result => {
+    nextTick(() => {
+        ocrBillRecognitionDialog.value?.open().then(result => {
         editDialog.value?.open({
             time: result.time,
             type: result.type,
@@ -1629,6 +1630,7 @@ function addByOCRBillImage(): void {
         });
     }).catch(() => {
         // user cancelled
+    });
     });
 }
 
