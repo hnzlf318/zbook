@@ -1757,6 +1757,7 @@ function onShowDateRangeError(message: string): void {
 onBeforeRouteUpdate((to) => {
     if (skipNextRouteUpdate.value) {
         skipNextRouteUpdate.value = false;
+        reload(false, true);
         return;
     }
     if (to.query) {

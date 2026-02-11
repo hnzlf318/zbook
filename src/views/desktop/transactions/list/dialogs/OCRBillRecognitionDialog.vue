@@ -6,14 +6,15 @@
             </template>
 
             <v-card-text class="d-flex flex-column flex-md-row flex-grow-1 overflow-y-auto" style="min-height: 320px">
-                <div v-if="!recognizedList.length" class="w-100 border position-relative"
+                <div v-if="!recognizedList.length" class="w-100 border position-relative ocr-drop-area"
                      @dragenter.prevent="onDragEnter"
                      @dragover.prevent
                      @dragleave.prevent="onDragLeave"
                      @drop.prevent="onDrop">
                     <div class="d-flex w-100 justify-center align-center text-center px-4 py-8"
                          :class="{ 'dropzone': true, 'dropzone-dark': isDarkMode, 'dropzone-blurry-bg': loading || isDragOver || recognizing, 'dropzone-dragover': isDragOver }">
-                        <div class="d-inline-flex flex-column" v-if="!loading && !imageFile && !isDragOver">
+                        <div class="d-inline-flex flex-column dropzone-content" v-if="!loading && !imageFile && !isDragOver"
+                             @click="showOpenImageDialog">
                             <h3 class="pa-2">{{ tt('You can drag and drop, paste or click to select a bill or transaction list screenshot') }}</h3>
                             <span class="pa-2">{{ tt('OCR runs locally on the server. Supports Chinese bill format (e.g. 2月7日 21:49, -100.00).') }}</span>
                         </div>
@@ -57,7 +58,10 @@
             </v-card-text>
 
             <v-card-text v-if="!recognizedList.length">
-                <div class="w-100 d-flex justify-center flex-wrap gap-4">
+                <div class="w-100 d-flex justify-center flex-wrap gap-4 align-center">
+                    <v-btn color="primary" variant="tonal" :disabled="loading || recognizing" @click="showOpenImageDialog">
+                        {{ tt('Select Image') }}
+                    </v-btn>
                     <v-btn :disabled="loading || recognizing || !imageFile" @click="recognize">
                         {{ tt('Recognize') }}
                         <v-progress-circular indeterminate size="22" class="ms-2" v-if="recognizing"></v-progress-circular>
@@ -250,6 +254,13 @@ defineExpose({ open });
     pointer-events: none;
     border-radius: 8px;
     z-index: 10;
+}
+.dropzone-content {
+    pointer-events: auto;
+    cursor: pointer;
+}
+.ocr-drop-area {
+    min-height: 200px;
 }
 .dropzone-blurry-bg { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .dropzone-dragover { border: 6px dashed rgba(var(--v-border-color),var(--v-border-opacity)); }
