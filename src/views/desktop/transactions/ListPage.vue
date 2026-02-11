@@ -74,7 +74,7 @@
                                                         <v-list-item key="OCRBillRecognition"
                                                                      :title="tt('OCR Bill Recognition')"
                                                                      :prepend-icon="mdiFileDocumentOutline"
-                                                                     @click="add()"></v-list-item>
+                                                                     @click="addByOCRBillImage"></v-list-item>
                                                         <v-list-item :key="template.id"
                                                                      :title="template.name"
                                                                      :prepend-icon="mdiTextBoxOutline"
@@ -736,7 +736,7 @@ import {
     categoryTypeToTransactionType,
     transactionTypeToCategoryType
 } from '@/lib/category.ts';
-import { isDataExportingEnabled, isDataImportingEnabled, isTransactionFromOCRImageRecognitionEnabled } from '@/lib/server_settings.ts';
+import { isDataExportingEnabled, isDataImportingEnabled } from '@/lib/server_settings.ts';
 import { scrollToSelectedItem, startDownloadFile } from '@/lib/ui/common.ts';
 import logger from '@/lib/logger.ts';
 
@@ -1620,35 +1620,9 @@ function add(template?: TransactionTemplate): void {
     });
 }
 
+/** 暂时与 add() 行为相同，用于验证下拉菜单是否正常；确认后再改为 OCR 识别逻辑 */
 function addByOCRBillImage(): void {
-    nextTick(() => {
-        ocrBillRecognitionDialog.value?.open().then(result => {
-        editDialog.value?.open({
-            time: result.time,
-            type: result.type,
-            categoryId: result.categoryId,
-            accountId: result.sourceAccountId,
-            destinationAccountId: result.destinationAccountId,
-            amount: result.sourceAmount,
-            destinationAmount: result.destinationAmount,
-            tagIds: result.tagIds ? result.tagIds.join(',') : undefined,
-            comment: result.comment,
-            noTransactionDraft: true
-        }).then(result => {
-            if (result && result.message) {
-                snackbar.value?.showMessage(result.message);
-            }
-
-            reload(false, false);
-        }).catch(error => {
-            if (error) {
-                snackbar.value?.showError(error);
-            }
-        });
-    }).catch(() => {
-        // user cancelled
-    });
-    });
+    add();
 }
 
 function importTransaction(): void {
