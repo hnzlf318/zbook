@@ -74,7 +74,7 @@ func RunPaddleBillOCR(imageData []byte, endpoint string) ([]PaddleBillOCRRawItem
 
 	req, err := http.NewRequest(http.MethodPost, endpoint, &body)
 	if err != nil {
-		return "", fmt.Errorf("create http request: %w", err)
+		return nil, fmt.Errorf("create http request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
