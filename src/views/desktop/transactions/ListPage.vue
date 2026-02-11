@@ -638,7 +638,6 @@
                             @error="onShowDateRangeError" />
 
     <edit-dialog ref="editDialog" :type="TransactionEditPageType.Transaction" />
-    <a-i-image-recognition-dialog ref="aiImageRecognitionDialog" />
     <ocr-bill-recognition-dialog ref="ocrBillRecognitionDialog" />
     <import-dialog ref="importDialog" :persistent="true" />
 
@@ -881,7 +880,7 @@ const tagFilterMenu = useTemplateRef<VMenu>('tagFilterMenu');
 const confirmDialog = useTemplateRef<ConfirmDialogType>('confirmDialog');
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
 const editDialog = useTemplateRef<EditDialogType>('editDialog');
-const ocrBillRecognitionDialog = useTemplateRef<OCRBillRecognitionDialogType>('ocrBillRecognitionDialog');
+const ocrBillRecognitionDialog = ref<OCRBillRecognitionDialogType | null>(null);
 const importDialog = useTemplateRef<ImportDialogType>('importDialog');
 
 const activeTab = ref<string>('transactionPage');
