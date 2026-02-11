@@ -61,15 +61,15 @@ func RunPaddleBillOCR(imageData []byte, endpoint string) ([]PaddleBillOCRRawItem
 
 	part, err := writer.CreateFormFile("image", "bill.jpg")
 	if err != nil {
-		return "", fmt.Errorf("create form file: %w", err)
+		return nil, fmt.Errorf("create form file: %w", err)
 	}
 
 	if _, err := part.Write(imageData); err != nil {
-		return "", fmt.Errorf("write image data: %w", err)
+		return nil, fmt.Errorf("write image data: %w", err)
 	}
 
 	if err := writer.Close(); err != nil {
-		return "", fmt.Errorf("close multipart writer: %w", err)
+		return nil, fmt.Errorf("close multipart writer: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, endpoint, &body)
