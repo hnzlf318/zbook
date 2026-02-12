@@ -1,5 +1,5 @@
 <template>
-    <v-dialog width="900" :persistent="loading || recognizing || !!imageFile" v-model="showState" @paste="onPaste">
+    <v-dialog max-width="90vw" width="900" :persistent="loading || recognizing || !!imageFile" v-model="showState" @paste="onPaste">
         <v-card class="pa-sm-1 pa-md-2 d-flex flex-column">
             <template #title>
                 <h4 class="text-h4">{{ tt('OCR Bill Recognition') }}</h4>
@@ -33,22 +33,22 @@
                             <tr>
                                 <th class="text-end">{{ tt('Amount') }}</th>
                                 <th>{{ tt('Category') }}</th>
-                                <th>{{ tt('Account') }}</th>
+                                <th class="ocr-cell-account">{{ tt('Account') }}</th>
                                 <th class="text-end">{{ tt('Time') }}</th>
                                 <th>{{ tt('Transaction Items') }}</th>
-                                <th>{{ tt('Tags') }}</th>
+                                <th class="ocr-cell-tags">{{ tt('Tags') }}</th>
                                 <th>{{ tt('Description') }}</th>
-                                <th width="90"></th>
+                                <th class="ocr-cell-actions"></th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(item, idx) in recognizedList" :key="idx">
                                 <td class="text-end">{{ formatAmount(item.sourceAmount) }}</td>
                                 <td>{{ getCategoryName(item.categoryId) || '-' }}</td>
-                                <td>{{ getAccountName(item.sourceAccountId) || '-' }}</td>
+                                <td class="ocr-cell-account">{{ getAccountName(item.sourceAccountId) || '-' }}</td>
                                 <td class="text-end">{{ formatTime(item.time) }}</td>
                                 <td>{{ getItemNames(item.itemIds) || '-' }}</td>
-                                <td>{{ getTagNames(item.tagIds) || '-' }}</td>
+                                <td class="ocr-cell-tags">{{ getTagNames(item.tagIds) || '-' }}</td>
                                 <td>{{ item.comment || '-' }}</td>
                                 <td>
                                     <v-btn size="small" color="primary" variant="tonal"
@@ -231,12 +231,20 @@ function openImage(event: Event): void {
 function recognize(): void {
     if (loading.value || recognizing.value || !imageFile.value) return;
     recognizing.value = true;
-    transactionsStore.recognizeReceiptImageByOCR(imageFile.value).then(list => {
-        recognizedList.value = list;
+    const file = imageFile.value;
+    Promise.all([
+        accountsStore.loadAllAccounts({ force: false }),
+        transactionCategoriesStore.loadAllCategories({ force: false }),
+        transactionTagsStore.loadAllTags({ force: false }),
+        transactionItemsStore.loadAllItems({ force: false }),
+        transactionsStore.recognizeReceiptImageByOCR(file)
+    ]).then((results) => {
+        recognizedList.value = results[4] as RecognizedReceiptImageResponse[];
         recognizing.value = false;
     }).catch(error => {
         recognizing.value = false;
-        if (!error.processed) snackbar.value?.showError(error);
+        if (error?.processed) return;
+        snackbar.value?.showError(error as string | { message: string } | { error: import('@/core/api').ErrorResponse });
     });
 }
 
@@ -336,6 +344,18 @@ defineExpose({ open, markRowAdded });
 }
 .ocr-card-actions {
     flex-shrink: 0;
+}
+.ocr-recognized-table {
+    table-layout: auto;
+}
+.ocr-recognized-table .ocr-cell-account,
+.ocr-recognized-table .ocr-cell-tags {
+    white-space: nowrap;
+    min-width: 5em;
+}
+.ocr-recognized-table .ocr-cell-actions {
+    width: 1%;
+    white-space: nowrap;
 }
 .dropzone-blurry-bg { -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .dropzone-dragover { border: 6px dashed rgba(var(--v-border-color),var(--v-border-opacity)); }
