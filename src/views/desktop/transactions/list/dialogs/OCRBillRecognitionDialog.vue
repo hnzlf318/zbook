@@ -1,5 +1,5 @@
 <template>
-    <v-dialog max-width="90vw" width="900" :persistent="loading || recognizing || !!imageFile" v-model="showState" @paste="onPaste">
+    <v-dialog  :persistent="loading || recognizing || !!imageFile" v-model="showState" @paste="onPaste">
         <v-card class="pa-sm-1 pa-md-2 d-flex flex-column">
             <template #title>
                 <h4 class="text-h4">{{ tt('OCR Bill Recognition') }}</h4>
