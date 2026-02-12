@@ -10,6 +10,7 @@ type RecognizedReceiptImageResponse struct {
 	SourceAmount         int64           `json:"sourceAmount,omitempty"`
 	DestinationAmount    int64           `json:"destinationAmount,omitempty"`
 	TagIds               []string        `json:"tagIds,omitempty"`
+	ItemIds              []string        `json:"itemIds,omitempty"`
 	Comment              string          `json:"comment,omitempty"`
 }
 
@@ -26,7 +27,8 @@ type RecognizedReceiptImageResult struct {
 	AccountName            string   `json:"account,omitempty" jsonschema_description:"Account name for the transaction"`
 	CategoryName           string   `json:"category,omitempty" jsonschema_description:"Category name for the transaction"`
 	TagNames               []string `json:"tags,omitempty" jsonschema_description:"List of tags associated with the transaction (maximum 10 tags allowed)"`
-	Description            string   `json:"description,omitempty" jsonschema_description:"Transaction description"`
+	ItemNames              []string `json:"itemNames,omitempty" jsonschema_description:"Transaction project/item names"`
+	Description            string   `json:"description,omitempty" jsonschema_description:"Transaction description (comment)"`
 	DestinationAmount      string   `json:"destination_amount,omitempty" jsonschema_description:"Destination amount for transfer transactions"`
 	DestinationAccountName string   `json:"destination_account,omitempty" jsonschema_description:"Destination account name for transfer transactions"`
 }

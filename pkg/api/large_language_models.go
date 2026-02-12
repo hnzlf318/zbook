@@ -20,6 +20,7 @@ type LargeLanguageModelsApi struct {
 	ApiUsingConfig
 	transactionCategories *services.TransactionCategoryService
 	transactionTags       *services.TransactionTagService
+	transactionItems      *services.TransactionItemService
 	accounts              *services.AccountService
 	users                 *services.UserService
 }
@@ -32,6 +33,7 @@ var (
 		},
 		transactionCategories: services.TransactionCategories,
 		transactionTags:       services.TransactionTags,
+		transactionItems:      services.TransactionItems,
 		accounts:              services.Accounts,
 		users:                 services.Users,
 	}
@@ -163,13 +165,14 @@ func (a *LargeLanguageModelsApi) RecognizeReceiptImageByOCRHandler(c *core.WebCo
 			result.TagNames = []string{label}
 		}
 
-		// 描述：优先使用 project，其次使用 text
-		project := strings.TrimSpace(raw.Project)
+		// 描述(comment)：使用 text 映射为内部 comment
 		text := strings.TrimSpace(raw.Text)
+		result.Description = text
+
+		// 项目(transaction item)：使用 project 映射为内部交易项目
+		project := strings.TrimSpace(raw.Project)
 		if project != "" {
-			result.Description = project
-		} else if text != "" {
-			result.Description = text
+			result.ItemNames = []string{project}
 		}
 
 		parsedList = append(parsedList, result)
@@ -215,9 +218,23 @@ func (a *LargeLanguageModelsApi) RecognizeReceiptImageByOCRHandler(c *core.WebCo
 	}
 	tagMap := a.transactionTags.GetVisibleTagNameMapByList(tags)
 
+	items, err := a.transactionItems.GetAllItemsByUid(c, uid)
+	if err != nil {
+		log.Errorf(c, "[large_language_models.RecognizeReceiptImageByOCRHandler] failed to get transaction items for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+	itemNameMap := make(map[string]*models.TransactionItem)
+	for _, item := range items {
+		if item != nil && !item.Hidden && item.Name != "" {
+			if _, exists := itemNameMap[item.Name]; !exists {
+				itemNameMap[item.Name] = item
+			}
+		}
+	}
+
 	transactions := make([]models.RecognizedReceiptImageResponse, 0, len(parsedList))
 	for _, one := range parsedList {
-		resp, parseErr := a.parseRecognizedReceiptImageResponse(c, uid, clientTimezone, one, accountMap, expenseCategoryMap, incomeCategoryMap, transferCategoryMap, tagMap)
+		resp, parseErr := a.parseRecognizedReceiptImageResponse(c, uid, clientTimezone, one, accountMap, expenseCategoryMap, incomeCategoryMap, transferCategoryMap, tagMap, itemNameMap)
 		if parseErr != nil {
 			continue
 		}
@@ -230,7 +247,7 @@ func (a *LargeLanguageModelsApi) RecognizeReceiptImageByOCRHandler(c *core.WebCo
 	return &models.RecognizedReceiptImageListResponse{Transactions: transactions}, nil
 }
 
-func (a *LargeLanguageModelsApi) parseRecognizedReceiptImageResponse(c *core.WebContext, uid int64, clientTimezone *time.Location, recognizedResult *models.RecognizedReceiptImageResult, accountMap map[string]*models.Account, expenseCategoryMap map[string]*models.TransactionCategory, incomeCategoryMap map[string]*models.TransactionCategory, transferCategoryMap map[string]*models.TransactionCategory, tagMap map[string]*models.TransactionTag) (*models.RecognizedReceiptImageResponse, *errs.Error) {
+func (a *LargeLanguageModelsApi) parseRecognizedReceiptImageResponse(c *core.WebContext, uid int64, clientTimezone *time.Location, recognizedResult *models.RecognizedReceiptImageResult, accountMap map[string]*models.Account, expenseCategoryMap map[string]*models.TransactionCategory, incomeCategoryMap map[string]*models.TransactionCategory, transferCategoryMap map[string]*models.TransactionCategory, tagMap map[string]*models.TransactionTag, itemNameMap map[string]*models.TransactionItem) (*models.RecognizedReceiptImageResponse, *errs.Error) {
 	recognizedReceiptImageResponse := &models.RecognizedReceiptImageResponse{
 		Type: models.TRANSACTION_TYPE_EXPENSE,
 	}
@@ -343,6 +360,16 @@ func (a *LargeLanguageModelsApi) parseRecognizedReceiptImageResponse(c *core.Web
 
 	if len(recognizedResult.Description) > 0 {
 		recognizedReceiptImageResponse.Comment = recognizedResult.Description
+	}
+
+	if len(recognizedResult.ItemNames) > 0 {
+		itemIds := make([]string, 0, len(recognizedResult.ItemNames))
+		for _, name := range recognizedResult.ItemNames {
+			if item, exists := itemNameMap[name]; exists {
+				itemIds = append(itemIds, utils.Int64ToString(item.ItemId))
+			}
+		}
+		recognizedReceiptImageResponse.ItemIds = itemIds
 	}
 
 	return recognizedReceiptImageResponse, nil

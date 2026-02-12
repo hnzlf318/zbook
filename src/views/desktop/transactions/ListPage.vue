@@ -1621,28 +1621,34 @@ function add(template?: TransactionTemplate): void {
 
 function addByOCRBillImage(): void {
     nextTick(() => {
-        ocrBillRecognitionDialog.value?.open().then(result => {
-            editDialog.value?.open({
-                time: result.time,
-                type: result.type,
-                categoryId: result.categoryId,
-                accountId: result.sourceAccountId,
-                destinationAccountId: result.destinationAccountId,
-                amount: result.sourceAmount,
-                destinationAmount: result.destinationAmount,
-                tagIds: result.tagIds ? result.tagIds.join(',') : undefined,
-                comment: result.comment,
-                noTransactionDraft: true
-            }).then(editResult => {
-                if (editResult && editResult.message) {
-                    snackbar.value?.showMessage(editResult.message);
+        ocrBillRecognitionDialog.value?.open({
+            onAdd: async (item, rowIndex) => {
+                try {
+                    const editResult = await editDialog.value?.open({
+                        time: item.time,
+                        type: item.type,
+                        categoryId: item.categoryId,
+                        accountId: item.sourceAccountId,
+                        destinationAccountId: item.destinationAccountId,
+                        amount: item.sourceAmount,
+                        destinationAmount: item.destinationAmount,
+                        tagIds: item.tagIds?.length ? item.tagIds.join(',') : undefined,
+                        itemIds: item.itemIds?.length ? item.itemIds.join(',') : undefined,
+                        comment: item.comment,
+                        noTransactionDraft: true
+                    });
+                    if (editResult?.message) {
+                        snackbar.value?.showMessage(editResult.message);
+                    }
+                    reload(false, false);
+                } catch (error) {
+                    if (error && !(error as { processed?: boolean }).processed) {
+                        snackbar.value?.showError(error);
+                    }
+                } finally {
+                    ocrBillRecognitionDialog.value?.markRowAdded(rowIndex);
                 }
-                reload(false, false);
-            }).catch(error => {
-                if (error) {
-                    snackbar.value?.showError(error);
-                }
-            });
+            }
         }).catch(() => {
             // 用户取消 OCR 弹窗
         });

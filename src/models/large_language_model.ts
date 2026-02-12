@@ -7,6 +7,7 @@ export interface RecognizedReceiptImageResponse {
     readonly sourceAmount?: number;
     readonly destinationAmount?: number;
     readonly tagIds?: string[];
+    readonly itemIds?: string[];
     readonly comment?: string;
 }
 

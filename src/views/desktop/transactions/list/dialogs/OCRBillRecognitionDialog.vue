@@ -28,22 +28,32 @@
 
                 <div v-else class="w-100">
                     <p class="text-body-2 mb-2">{{ tt('Recognized transactions (click Add to confirm and edit):') }}</p>
-                    <v-table density="compact">
+                    <v-table density="compact" class="ocr-recognized-table">
                         <thead>
                             <tr>
-                                <th>{{ tt('Description') }}</th>
                                 <th class="text-end">{{ tt('Amount') }}</th>
+                                <th>{{ tt('Category') }}</th>
+                                <th>{{ tt('Account') }}</th>
                                 <th class="text-end">{{ tt('Time') }}</th>
-                                <th width="100"></th>
+                                <th>{{ tt('Transaction Items') }}</th>
+                                <th>{{ tt('Tags') }}</th>
+                                <th>{{ tt('Description') }}</th>
+                                <th width="90"></th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(item, idx) in recognizedList" :key="idx">
-                                <td>{{ item.comment || '-' }}</td>
                                 <td class="text-end">{{ formatAmount(item.sourceAmount) }}</td>
+                                <td>{{ getCategoryName(item.categoryId) || '-' }}</td>
+                                <td>{{ getAccountName(item.sourceAccountId) || '-' }}</td>
                                 <td class="text-end">{{ formatTime(item.time) }}</td>
+                                <td>{{ getItemNames(item.itemIds) || '-' }}</td>
+                                <td>{{ getTagNames(item.tagIds) || '-' }}</td>
+                                <td>{{ item.comment || '-' }}</td>
                                 <td>
-                                    <v-btn size="small" color="primary" variant="tonal" @click="addTransaction(item)">
+                                    <v-btn size="small" color="primary" variant="tonal"
+                                           :disabled="addedRowIndices.has(idx)"
+                                           @click="onAddClick(item, idx)">
                                         {{ tt('Add') }}
                                     </v-btn>
                                 </td>
@@ -87,6 +97,10 @@ import { useTheme } from 'vuetify';
 
 import { useI18n } from '@/locales/helpers.ts';
 
+import { useAccountsStore } from '@/stores/account.ts';
+import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
+import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
+import { useTransactionItemsStore } from '@/stores/transactionItem.ts';
 import { useTransactionsStore } from '@/stores/transaction.ts';
 
 import { KnownFileType } from '@/core/file.ts';
@@ -100,8 +114,16 @@ import logger from '@/lib/logger.ts';
 
 type SnackBarType = InstanceType<typeof SnackBar>;
 
+export interface OCRBillRecognitionOpenOptions {
+    onAdd?(item: RecognizedReceiptImageResponse, rowIndex: number): void | Promise<void>;
+}
+
 const theme = useTheme();
 const { tt } = useI18n();
+const accountsStore = useAccountsStore();
+const transactionCategoriesStore = useTransactionCategoriesStore();
+const transactionTagsStore = useTransactionTagsStore();
+const transactionItemsStore = useTransactionItemsStore();
 const transactionsStore = useTransactionsStore();
 
 const snackbar = useTemplateRef<SnackBarType>('snackbar');
@@ -109,6 +131,7 @@ const imageInput = useTemplateRef<HTMLInputElement>('imageInput');
 
 let resolveFunc: ((response: RecognizedReceiptImageResponse) => void) | null = null;
 let rejectFunc: ((reason?: unknown) => void) | null = null;
+let openOptions: OCRBillRecognitionOpenOptions | undefined;
 
 const showState = ref<boolean>(false);
 const loading = ref<boolean>(false);
@@ -117,8 +140,32 @@ const imageFile = ref<File | null>(null);
 const imageSrc = ref<string | undefined>(undefined);
 const isDragOver = ref<boolean>(false);
 const recognizedList = ref<RecognizedReceiptImageResponse[]>([]);
+const addedRowIndices = ref<Set<number>>(new Set());
 
 const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
+
+function getCategoryName(categoryId?: string): string {
+    if (!categoryId) return '';
+    const cat = transactionCategoriesStore.allTransactionCategoriesMap[categoryId];
+    return cat?.name ?? '';
+}
+
+function getAccountName(accountId?: string): string {
+    if (!accountId) return '';
+    const acc = accountsStore.allAccountsMap[accountId];
+    return acc?.name ?? '';
+}
+
+function getTagNames(tagIds?: string[]): string {
+    if (!tagIds?.length) return '';
+    return tagIds.map(id => transactionTagsStore.allTransactionTagsMap[id]?.name ?? id).join(', ');
+}
+
+function getItemNames(itemIds?: string[]): string {
+    if (!itemIds?.length) return '';
+    const itemsMap = transactionItemsStore.allTransactionItemsMap;
+    return itemIds.map(id => itemsMap[id]?.name ?? id).join(', ');
+}
 
 function loadImage(file: File): void {
     loading.value = true;
@@ -139,18 +186,34 @@ function loadImage(file: File): void {
     });
 }
 
-function open(): Promise<RecognizedReceiptImageResponse> {
+function open(config?: OCRBillRecognitionOpenOptions): Promise<RecognizedReceiptImageResponse> {
     showState.value = true;
     loading.value = false;
     recognizing.value = false;
     imageFile.value = null;
     imageSrc.value = undefined;
     recognizedList.value = [];
+    addedRowIndices.value = new Set();
+    openOptions = config;
 
     return new Promise((resolve, reject) => {
         resolveFunc = resolve;
         rejectFunc = reject;
     });
+}
+
+function markRowAdded(rowIndex: number): void {
+    addedRowIndices.value = new Set(addedRowIndices.value).add(rowIndex);
+}
+
+async function onAddClick(item: RecognizedReceiptImageResponse, rowIndex: number): Promise<void> {
+    if (addedRowIndices.value.has(rowIndex)) return;
+    if (openOptions?.onAdd) {
+        await openOptions.onAdd(item, rowIndex);
+        markRowAdded(rowIndex);
+        return;
+    }
+    addTransaction(item);
 }
 
 function showOpenImageDialog(): void {
@@ -188,6 +251,7 @@ function reset(): void {
     recognizedList.value = [];
     imageFile.value = null;
     imageSrc.value = undefined;
+    addedRowIndices.value = new Set();
 }
 
 function cancel(): void {
@@ -198,6 +262,8 @@ function cancel(): void {
     imageFile.value = null;
     imageSrc.value = undefined;
     recognizedList.value = [];
+    addedRowIndices.value = new Set();
+    openOptions = undefined;
     resolveFunc = null;
     rejectFunc = null;
 }
@@ -245,7 +311,7 @@ function onPaste(event: ClipboardEvent): void {
     }
 }
 
-defineExpose({ open });
+defineExpose({ open, markRowAdded });
 </script>
 
 <style scoped>
