@@ -113,7 +113,7 @@
                             <v-divider/>
                             <br/>
                             <p>
-                                <span>ezBookkeeping's codebase and localization translation rely on contributions from the community. The following people have contributed to ezBookkeeping:</span>
+                                <span>zBook's codebase and localization translation rely on contributions from the community. The following people have contributed to zBook:</span>
                             </p>
                             <div>
                                 <strong>Project Maintainer</strong>
@@ -169,7 +169,7 @@
                                 </tbody>
                             </table>
                             <p class="mt-4 mb-4">
-                                <span>ezBookkeeping also contains additional third party software and illustration.</span><br/>
+                                <span>zBook also contains additional third party software and illustration.</span><br/>
                                 <span>All the third party software / illustration included or linked is redistributed under the terms and conditions of their original licenses.</span>
                             </p>
                             <p :key="licenseInfo.name" v-for="licenseInfo in thirdPartyLicenses">
