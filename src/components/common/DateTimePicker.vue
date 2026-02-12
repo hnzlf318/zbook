@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useTemplateRef } from 'vue';
+import { computed, ref, useTemplateRef, watch } from 'vue';
 import { type MenuView, VueDatePicker } from '@vuepic/vue-datepicker';
 
 import { useI18n } from '@/locales/helpers.ts';
@@ -114,12 +114,26 @@ const actualNumeralSystem = computed<NumeralSystem>(() => {
     }
 });
 
-const dateTime = computed<SupportedModelValue>({
-    get: () => props.modelValue,
-    set: (value: SupportedModelValue) => emit('update:modelValue', value)
+const internalValue = ref<SupportedModelValue>(
+    props.modelValue instanceof Date ? new Date(props.modelValue.getTime()) : props.modelValue
+);
+
+watch(() => props.modelValue, (v) => {
+    internalValue.value = v instanceof Date ? new Date(v.getTime()) : v;
 });
 
-const isDateRange = computed<boolean>(() => isArray(props.modelValue));
+watch(internalValue, (v) => {
+    const same = props.modelValue instanceof Date && v instanceof Date
+        ? props.modelValue.getTime() === v.getTime()
+        : props.modelValue === v;
+    if (!same) {
+        emit('update:modelValue', v);
+    }
+}, { deep: true });
+
+const dateTime = internalValue;
+
+const isDateRange = computed<boolean>(() => isArray(internalValue.value));
 
 function getAlternateDate(date: Date): string | undefined {
     if (!props.showAlternateDates) {

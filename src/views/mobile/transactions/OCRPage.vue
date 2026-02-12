@@ -1,6 +1,10 @@
 <template>
     <f7-page>
-        <f7-navbar :title="tt('OCR Bill Recognition')" :back-link="tt('Back')"></f7-navbar>
+        <f7-navbar :title="tt('OCR Bill Recognition')" :back-link="tt('Back')">
+            <f7-nav-right v-if="recognizedList.length">
+                <f7-link icon-f7="photo" :title="tt('Select Another Image')" @click="reset"></f7-link>
+            </f7-nav-right>
+        </f7-navbar>
 
         <f7-block v-if="!recognizedList.length" class="ocr-select-block">
             <p class="ocr-hint">{{ tt('You can select a bill or transaction list screenshot to recognize.') }}</p>
@@ -14,25 +18,25 @@
                 <f7-list-item v-for="(item, idx) in recognizedList" :key="idx" class="ocr-result-item">
                     <template #content>
                         <div class="ocr-item-inner">
-                            <div class="ocr-row">
-                                <span class="ocr-type">{{ getTypeLabel(item.type) }}</span>
-                                <span class="ocr-amount">{{ formatAmount(item.sourceAmount) }}</span>
-                                <span class="ocr-meta">{{ getCategoryName(item.categoryId) }} · {{ getAccountName(item.sourceAccountId) }}</span>
-                                <span class="ocr-meta">{{ formatTime(item.time) }}</span>
-                                <span class="ocr-meta" v-if="getItemNames(item.itemIds)">{{ getItemNames(item.itemIds) }}</span>
-                                <span class="ocr-meta" v-if="getTagNames(item.tagIds)">{{ getTagNames(item.tagIds) }}</span>
-                                <span class="ocr-desc" v-if="item.comment">{{ item.comment }}</span>
+                            <div class="ocr-fields">
+                                <div class="ocr-field"><span class="ocr-label">{{ tt('Income or Expense') }}</span><span class="ocr-value">{{ getTypeLabel(item.type) }}</span></div>
+                                <div class="ocr-field"><span class="ocr-label">{{ tt('Amount') }}</span><span class="ocr-value">{{ formatAmount(item.sourceAmount) }}</span></div>
+                                <div class="ocr-field"><span class="ocr-label">{{ tt('Date') }}</span><span class="ocr-value">{{ formatTime(item.time) }}</span></div>
+                                <div class="ocr-field"><span class="ocr-label">{{ tt('Category') }}</span><span class="ocr-value">{{ getCategoryName(item.categoryId) || '-' }}</span></div>
+                                <div class="ocr-field"><span class="ocr-label">{{ tt('Account') }}</span><span class="ocr-value">{{ getAccountName(item.sourceAccountId) || '-' }}</span></div>
+                                <div class="ocr-field" v-if="getItemNames(item.itemIds)"><span class="ocr-label">{{ tt('Transaction Items') }}</span><span class="ocr-value">{{ getItemNames(item.itemIds) }}</span></div>
+                                <div class="ocr-field" v-if="getTagNames(item.tagIds)"><span class="ocr-label">{{ tt('Tags') }}</span><span class="ocr-value">{{ getTagNames(item.tagIds) }}</span></div>
+                                <div class="ocr-field" v-if="item.comment"><span class="ocr-label">{{ tt('Description') }}</span><span class="ocr-value ocr-desc">{{ item.comment }}</span></div>
                             </div>
-                            <f7-button small fill color="blue" class="ocr-add-btn" :disabled="addedRowIndices.has(idx)" @click="onAdd(item, idx)">
-                                {{ tt('Add') }}
-                            </f7-button>
+                            <div class="ocr-add-wrap">
+                                <f7-button small fill color="blue" class="ocr-add-btn" :disabled="addedRowIndices.has(idx)" @click="onAdd(item, idx)">
+                                    {{ tt('Add') }}
+                                </f7-button>
+                            </div>
                         </div>
                     </template>
                 </f7-list-item>
             </f7-list>
-            <f7-block class="ocr-actions">
-                <f7-button fill @click="reset">{{ tt('Select Another Image') }}</f7-button>
-            </f7-block>
         </f7-block>
     </f7-page>
 </template>
@@ -189,23 +193,34 @@ function onAdd(item: RecognizedReceiptImageResponse, idx: number): void {
 }
 .ocr-item-inner {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
     width: 100%;
 }
-.ocr-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.5rem;
-    flex: 1;
-    min-width: 0;
+.ocr-fields {
     text-align: left;
 }
-.ocr-type { font-weight: 600; }
-.ocr-amount { font-weight: 600; margin-left: 0.25rem; }
-.ocr-meta { font-size: 0.9em; color: var(--f7-block-title-medium-text-color); }
-.ocr-desc { width: 100%; font-size: 0.85em; color: var(--f7-block-title-medium-text-color); }
-.ocr-add-btn { flex-shrink: 0; margin-top: 0.25rem; }
-.ocr-actions { margin-top: 1rem; }
+.ocr-field {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-bottom: 0.25rem;
+}
+.ocr-label {
+    flex-shrink: 0;
+    font-size: 0.85em;
+    color: var(--f7-block-title-medium-text-color);
+}
+.ocr-value {
+    min-width: 0;
+    font-size: 0.9em;
+}
+.ocr-value.ocr-desc {
+    word-break: break-word;
+}
+.ocr-add-wrap {
+    align-self: flex-end;
+    margin-top: 0.5rem;
+}
+.ocr-add-btn { flex-shrink: 0; }
 </style>
