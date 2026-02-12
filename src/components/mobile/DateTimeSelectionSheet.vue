@@ -243,7 +243,7 @@ function getSelectedDateFromPicker(): Date | null {
                     return date;
                 }
                 const match = dateAttr.match(/(\d{4})-(\d{2})-(\d{2})/);
-                if (match) {
+                if (match && match[1] && match[2] && match[3]) {
                     const year = parseInt(match[1], 10);
                     const month = parseInt(match[2], 10) - 1;
                     const day = parseInt(match[3], 10);
