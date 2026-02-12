@@ -19,7 +19,8 @@
                      :range="isDateRange ? { partialRange: false } : undefined"
                      :preset-dates="presetRanges"
                      :model-value="internalValue"
-                     @update:model-value="onPickerUpdate">
+                     @update:model-value="onPickerUpdate"
+                     @select="onPickerSelect">
         <template #year="{ value }">
             {{ getDisplayYear(value) }}
         </template>
@@ -133,6 +134,18 @@ function onPickerUpdate(value: SupportedModelValue): void {
     }
 }
 
+function onPickerSelect(value: SupportedModelValue): void {
+    if (value instanceof Date) {
+        internalValue.value = new Date(value.getTime());
+        const same = props.modelValue instanceof Date && internalValue.value instanceof Date
+            ? props.modelValue.getTime() === internalValue.value.getTime()
+            : props.modelValue === internalValue.value;
+        if (!same) {
+            emit('update:modelValue', internalValue.value);
+        }
+    }
+}
+
 const dateTime = internalValue;
 
 const isDateRange = computed<boolean>(() => isArray(internalValue.value));
@@ -172,7 +185,32 @@ function getDisplayDay(date: Date): string {
 }
 
 function getModelValue(): SupportedModelValue {
-    return dateTime.value;
+    if (datetimepicker.value) {
+        const picker = datetimepicker.value as unknown as { 
+            modelValue?: SupportedModelValue; 
+            selectedDate?: Date | Date[] | null;
+            $el?: HTMLElement;
+        };
+        if (picker.modelValue instanceof Date) {
+            return picker.modelValue;
+        }
+        if (picker.selectedDate instanceof Date) {
+            return picker.selectedDate;
+        }
+        if (picker.$el) {
+            const selectedCell = picker.$el.querySelector('.dp__cell_selected, .dp__active_date');
+            if (selectedCell) {
+                const dateAttr = selectedCell.getAttribute('data-date');
+                if (dateAttr) {
+                    const date = new Date(dateAttr);
+                    if (!isNaN(date.getTime())) {
+                        return date;
+                    }
+                }
+            }
+        }
+    }
+    return internalValue.value;
 }
 
 defineExpose({

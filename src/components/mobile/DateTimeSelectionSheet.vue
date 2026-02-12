@@ -12,7 +12,7 @@
             </div>
         </f7-toolbar>
         <f7-page-content class="margin-top">
-            <div class="block no-margin no-padding">
+            <div class="block no-margin no-padding" ref="datePickerContainer">
                 <date-time-picker ref="datetimepicker"
                                   datetime-picker-class="justify-content-center"
                                   :is-dark-mode="isDarkMode"
@@ -155,6 +155,7 @@ const environmentsStore = useEnvironmentsStore();
 
 const datetimepicker = useTemplateRef<DateTimePickerType>('datetimepicker');
 const timePickerContainer = useTemplateRef<HTMLDivElement>('timePickerContainer');
+const datePickerContainer = useTemplateRef<HTMLDivElement>('datePickerContainer');
 
 let resetTimePickerItemPositionItemsClass: string | undefined = undefined;
 let resetTimePickerItemPositionItemClass: string | undefined = undefined;
@@ -226,6 +227,37 @@ function onDatePickerUpdate(value: Date | Date[] | null): void {
     }
 }
 
+function getSelectedDateFromPicker(): Date | null {
+    if (!datetimepicker.value?.getModelValue) return null;
+    const value = datetimepicker.value.getModelValue();
+    if (value instanceof Date) {
+        return value;
+    }
+    if (datePickerContainer.value) {
+        const selectedCell = datePickerContainer.value.querySelector('.dp__cell_selected, .dp__active_date, .dp__cell[aria-selected="true"]');
+        if (selectedCell) {
+            const dateAttr = selectedCell.getAttribute('data-date') || selectedCell.getAttribute('aria-label');
+            if (dateAttr) {
+                const date = new Date(dateAttr);
+                if (!isNaN(date.getTime())) {
+                    return date;
+                }
+                const match = dateAttr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (match) {
+                    const year = parseInt(match[1], 10);
+                    const month = parseInt(match[2], 10) - 1;
+                    const day = parseInt(match[3], 10);
+                    const date = new Date(year, month, day);
+                    if (!isNaN(date.getTime())) {
+                        return date;
+                    }
+                }
+            }
+        }
+    }
+    return null;
+}
+
 function setCurrentTime(): void {
     dateTime.value = getLocalDatetimeFromSameDateTimeOfUnixTime(getCurrentUnixTime(), props.timezoneUtcOffset);
 
@@ -234,16 +266,17 @@ function setCurrentTime(): void {
     }
 }
 
-function confirm(): void {
-    if (mode.value === 'date' && datetimepicker.value?.getModelValue) {
-        const pickerValue = datetimepicker.value.getModelValue();
-        if (pickerValue instanceof Date) {
+async function confirm(): Promise<void> {
+    if (mode.value === 'date') {
+        await nextTick();
+        const selectedDate = getSelectedDateFromPicker();
+        if (selectedDate) {
             if (dateTime.value) {
-                const merged = new Date(pickerValue.getFullYear(), pickerValue.getMonth(), pickerValue.getDate(),
+                const merged = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(),
                     dateTime.value.getHours(), dateTime.value.getMinutes(), dateTime.value.getSeconds());
                 dateTime.value = merged;
             } else {
-                dateTime.value = pickerValue;
+                dateTime.value = selectedDate;
             }
         }
     }
