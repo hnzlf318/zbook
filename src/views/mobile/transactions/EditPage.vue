@@ -422,6 +422,12 @@
             <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && (mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && isTransactionPicturesEnabled() && !showTransactionPictures">
                 <f7-actions-button @click="showTransactionPictures = true">{{ tt('Add Picture') }}</f7-actions-button>
             </f7-actions-group>
+            <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance && transaction.editable">
+                <f7-actions-button close @click="enterEditMode" class="display-flex align-items-center justify-content-center">
+                    <f7-icon f7="square_arrow_pencil" class="margin-inline-end-half"></f7-icon>
+                    <span>{{ tt('Edit') }}</span>
+                </f7-actions-button>
+            </f7-actions-group>
             <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance">
                 <f7-actions-button @click="duplicate(false, false)">{{ tt('Duplicate') }}</f7-actions-button>
                 <f7-actions-button @click="duplicate(true, false)">{{ tt('Duplicate (With Time)') }}</f7-actions-button>
@@ -1144,6 +1150,11 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
             submitting.value = false;
         });
     });
+}
+
+function enterEditMode(): void {
+    showMoreActionSheet.value = false;
+    mode.value = TransactionEditPageMode.Edit;
 }
 
 function duplicate(withTime?: boolean, withGeoLocation?: boolean): void {
