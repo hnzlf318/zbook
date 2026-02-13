@@ -92,6 +92,7 @@
                                                   :label="sourceAmountTitle"
                                                   :placeholder="tt(sourceAmountName)"
                                                   :enable-formula="mode !== TransactionEditPageMode.View"
+                                                  :default-formula-mode="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit"
                                                   v-model="transaction.sourceAmount"/>
                                 </v-col>
                                 <v-col cols="12" :md="6" v-if="transaction.type === TransactionType.Transfer">
@@ -105,6 +106,7 @@
                                                   :label="transferInAmountTitle"
                                                   :placeholder="tt('Transfer In Amount')"
                                                   :enable-formula="mode !== TransactionEditPageMode.View"
+                                                  :default-formula-mode="mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit"
                                                   v-model="transaction.destinationAmount"/>
                                 </v-col>
                                 <v-col cols="12" md="12" v-if="transaction.type === TransactionType.Expense">

@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import SnackBar from '@/components/desktop/SnackBar.vue';
 
-import { ref, computed, useTemplateRef, watch } from 'vue';
+import { ref, computed, useTemplateRef, watch, onMounted } from 'vue';
 
 import { useI18n } from '@/locales/helpers.ts';
 import {
@@ -108,6 +108,8 @@ interface DesktopAmountInputProps extends CommonNumberInputProps {
     hide?: boolean;
     enableRules?: boolean;
     enableFormula?: boolean;
+    /** When true and enableFormula is true, start in formula mode (e.g. on Add Transaction page). */
+    defaultFormulaMode?: boolean;
     flipNegative?: boolean;
 }
 
@@ -154,6 +156,22 @@ const rules = [
 
 const currentFormula = ref<string>('');
 const formulaMode = ref<boolean>(false);
+
+function applyDefaultFormulaMode(): void {
+    if (props.defaultFormulaMode && props.enableFormula) {
+        currentFormula.value = currentValue.value;
+        formulaMode.value = true;
+    }
+}
+
+onMounted(applyDefaultFormulaMode);
+
+watch(() => [props.defaultFormulaMode, props.enableFormula] as const, ([defaultFormulaMode, enableFormula]) => {
+    if (defaultFormulaMode && enableFormula) {
+        currentFormula.value = currentValue.value;
+        formulaMode.value = true;
+    }
+});
 
 const numeralSystem = computed<NumeralSystem>(() => getCurrentNumeralSystemType());
 
