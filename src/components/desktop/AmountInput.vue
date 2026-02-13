@@ -5,7 +5,7 @@
                   :readonly="!!readonly" :disabled="!!disabled"
                   :label="label" :placeholder="placeholder"
                   :persistent-placeholder="!!persistentPlaceholder"
-                  :rules="enableRules ? rules : []" v-model="currentValue" v-if="!hide && !formulaMode"
+                  :rules="enableRules ? rules : []" v-model="currentValue" v-if="!hide && !formulaMode && !(formulaModeOnly && enableFormula)"
                   @keydown="onKeyUpDown" @keyup="onKeyUpDown" @paste="onPaste" @click="onClick">
         <template #prepend-inner v-if="currency && prependText">
             <div>{{ prependText }}</div>
@@ -16,7 +16,7 @@
                 <template v-slot:activator="{ props }">
                     <v-icon class="ms-2" :icon="mdiCalculatorVariantOutline"
                             @keydown.enter="enterFormulaMode" @keydown.space="enterFormulaMode" @click="enterFormulaMode"
-                            v-bind="props" v-if="enableFormula && !formulaMode"></v-icon>
+                            v-bind="props" v-if="enableFormula && !formulaMode && !formulaModeOnly"></v-icon>
                 </template>
             </v-tooltip>
         </template>
@@ -26,7 +26,7 @@
                   :density="density" :readonly="!!readonly" :disabled="!!disabled"
                   :label="label" :placeholder="placeholder"
                   :persistent-placeholder="!!persistentPlaceholder"
-                  v-model="currentFormula" v-if="!hide && formulaMode"
+                  v-model="currentFormula" v-if="!hide && (formulaMode || (formulaModeOnly && enableFormula))"
                   @keydown.enter="calculateFormula" @click="onClick">
         <template #prepend-inner v-if="currency && prependText">
             <div>{{ prependText }}</div>
@@ -37,14 +37,14 @@
                 <template v-slot:activator="{ props }">
                     <v-icon class="ms-2" color="primary" :icon="mdiCheck"
                             @click="calculateFormula" v-bind="props"
-                            v-if="formulaMode"></v-icon>
+                            v-if="formulaMode || (formulaModeOnly && enableFormula)"></v-icon>
                 </template>
             </v-tooltip>
             <v-tooltip :text="tt('Exit formula mode')">
                 <template v-slot:activator="{ props }">
                     <v-icon class="ms-2" color="secondary" :icon="mdiClose"
                             @click="exitFormulaMode" v-bind="props"
-                            v-if="formulaMode"></v-icon>
+                            v-if="(formulaMode || (formulaModeOnly && enableFormula)) && !formulaModeOnly"></v-icon>
                 </template>
             </v-tooltip>
         </template>
@@ -110,6 +110,8 @@ interface DesktopAmountInputProps extends CommonNumberInputProps {
     enableFormula?: boolean;
     /** When true and enableFormula is true, start in formula mode (e.g. on Add Transaction page). */
     defaultFormulaMode?: boolean;
+    /** When true and enableFormula is true, always stay in formula mode (no exit, Enter only calculates and keeps formula mode). */
+    formulaModeOnly?: boolean;
     flipNegative?: boolean;
 }
 
@@ -158,7 +160,7 @@ const currentFormula = ref<string>('');
 const formulaMode = ref<boolean>(false);
 
 function applyDefaultFormulaMode(): void {
-    if (props.defaultFormulaMode && props.enableFormula) {
+    if (props.enableFormula && (props.defaultFormulaMode || props.formulaModeOnly)) {
         currentFormula.value = currentValue.value;
         formulaMode.value = true;
     }
@@ -166,8 +168,8 @@ function applyDefaultFormulaMode(): void {
 
 onMounted(applyDefaultFormulaMode);
 
-watch(() => [props.defaultFormulaMode, props.enableFormula] as const, ([defaultFormulaMode, enableFormula]) => {
-    if (defaultFormulaMode && enableFormula) {
+watch(() => [props.defaultFormulaMode, props.formulaModeOnly, props.enableFormula] as const, ([defaultFormulaMode, formulaModeOnly, enableFormula]) => {
+    if (enableFormula && (defaultFormulaMode || formulaModeOnly)) {
         currentFormula.value = currentValue.value;
         formulaMode.value = true;
     }
@@ -247,7 +249,12 @@ function calculateFormula(): void {
             const textualValue = getFormattedValue(calculatedAmount);
             const hasDecimalSeparator = textualValue.indexOf(decimalSeparator) >= 0;
             currentValue.value = getValidFormattedValue(calculatedAmount, textualValue, hasDecimalSeparator);
-            formulaMode.value = false;
+            if (props.formulaModeOnly) {
+                currentFormula.value = currentValue.value;
+                formulaMode.value = true;
+            } else {
+                formulaMode.value = false;
+            }
         } else {
             snackbar.value?.showMessage('Formula is invalid');
         }
