@@ -6,7 +6,7 @@
             <f7-nav-right :class="{ 'navbar-compact-icons': true, 'disabled': loading }" v-if="mode !== TransactionEditPageMode.View || transaction.type !== TransactionType.ModifyBalance">
                 <f7-link icon-f7="ellipsis" @click="showMoreActionSheet = true"></f7-link>
                 <f7-link v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance && transaction.editable"
-                         icon-f7="square_arrow_pencil" :title="tt('Edit')" @click="enterEditMode"></f7-link>
+                         icon-f7="pencil" :title="tt('Edit')" @click="enterEditMode"></f7-link>
                 <f7-link v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.Edit"
                          icon-f7="xmark" :title="tt('Cancel')" @click="cancelEditMode"></f7-link>
                 <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': inputIsEmpty || submitting }" @click="save" v-if="mode === TransactionEditPageMode.Add"></f7-link>
@@ -793,7 +793,7 @@ function init(): void {
 
     if (pageTypeAndMode.type === TransactionEditPageType.Transaction) {
         if (query['id']) {
-            if (mode.value === TransactionEditPageMode.Edit) {
+            if (mode.value === TransactionEditPageMode.Edit || mode.value === TransactionEditPageMode.View) {
                 editId.value = query['id'];
             } else if (mode.value === TransactionEditPageMode.Add) {
                 duplicateFromId.value = query['id'];
@@ -1156,11 +1156,12 @@ function enterEditMode(): void {
 }
 
 function cancelEditMode(): void {
-    if (pageTypeAndMode?.type !== TransactionEditPageType.Transaction || !editId.value) {
+    const id = editId.value ?? query['id'];
+    if (pageTypeAndMode?.type !== TransactionEditPageType.Transaction || !id) {
         return;
     }
     loading.value = true;
-    transactionsStore.getTransaction({ transactionId: editId.value, withPictures: true }).then((fetched: Transaction) => {
+    transactionsStore.getTransaction({ transactionId: id, withPictures: true }).then((fetched: Transaction) => {
         setTransactionModelByTransaction(
             transaction.value,
             fetched,
