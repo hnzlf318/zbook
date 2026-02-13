@@ -5,7 +5,11 @@
             <f7-nav-title :title="tt(title)"></f7-nav-title>
             <f7-nav-right :class="{ 'navbar-compact-icons': true, 'disabled': loading }" v-if="mode !== TransactionEditPageMode.View || transaction.type !== TransactionType.ModifyBalance">
                 <f7-link icon-f7="ellipsis" @click="showMoreActionSheet = true"></f7-link>
-                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': inputIsEmpty || submitting }" @click="save" v-if="mode !== TransactionEditPageMode.View"></f7-link>
+                <f7-link v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance && transaction.editable"
+                         icon-f7="square_arrow_pencil" :title="tt('Edit')" @click="enterEditMode"></f7-link>
+                <f7-link v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.Edit"
+                         icon-f7="xmark" :title="tt('Cancel')" @click="cancelEditMode"></f7-link>
+                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': inputIsEmpty || submitting }" @click="save" v-if="mode === TransactionEditPageMode.Add"></f7-link>
             </f7-nav-right>
         </f7-navbar>
 
@@ -421,12 +425,6 @@
             </f7-actions-group>
             <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && (mode === TransactionEditPageMode.Add || mode === TransactionEditPageMode.Edit) && isTransactionPicturesEnabled() && !showTransactionPictures">
                 <f7-actions-button @click="showTransactionPictures = true">{{ tt('Add Picture') }}</f7-actions-button>
-            </f7-actions-group>
-            <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance && transaction.editable">
-                <f7-actions-button close @click="enterEditMode" class="display-flex align-items-center justify-content-center">
-                    <f7-icon f7="square_arrow_pencil" class="margin-inline-end-half"></f7-icon>
-                    <span>{{ tt('Edit') }}</span>
-                </f7-actions-button>
             </f7-actions-group>
             <f7-actions-group v-if="pageTypeAndMode?.type === TransactionEditPageType.Transaction && mode === TransactionEditPageMode.View && transaction.type !== TransactionType.ModifyBalance">
                 <f7-actions-button @click="duplicate(false, false)">{{ tt('Duplicate') }}</f7-actions-button>
@@ -1155,6 +1153,35 @@ function viewOrRemovePicture(pictureInfo: TransactionPictureInfoBasicResponse): 
 function enterEditMode(): void {
     showMoreActionSheet.value = false;
     mode.value = TransactionEditPageMode.Edit;
+}
+
+function cancelEditMode(): void {
+    if (pageTypeAndMode?.type !== TransactionEditPageType.Transaction || !editId.value) {
+        return;
+    }
+    loading.value = true;
+    transactionsStore.getTransaction({ transactionId: editId.value, withPictures: true }).then((fetched: Transaction) => {
+        setTransactionModelByTransaction(
+            transaction.value,
+            fetched,
+            allCategories.value,
+            allCategoriesMap.value,
+            allVisibleAccounts.value,
+            allAccountsMap.value,
+            allTagsMap.value,
+            (unref(transactionItemsStore.allTransactionItemsMap) ?? {}) as Record<string, { id: string; hidden?: boolean }>,
+            defaultAccountId.value,
+            {},
+            true
+        );
+        mode.value = TransactionEditPageMode.View;
+        loading.value = false;
+    }).catch((error: unknown) => {
+        loading.value = false;
+        if (error && !(error as { processed?: boolean }).processed) {
+            showToast((error as { message?: string })?.message ?? 'Unable to reload transaction');
+        }
+    });
 }
 
 function duplicate(withTime?: boolean, withGeoLocation?: boolean): void {
